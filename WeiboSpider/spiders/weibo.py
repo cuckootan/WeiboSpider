@@ -249,10 +249,10 @@ class WeiboSpider(CrawlSpider):
         image_item = response.meta['item']
 
         for div_selector in response.xpath('/html/body/div[@class="c"]'):
-            # 如果只有一张图片。
+            # 如果只有一张图片，则保存到 list 后直接返回。
             if div_selector.xpath('img'):
                 image_item['image_list'].append(div_selector.xpath('img/@src').extract_first())
-                yield
+                return image_item
 
             if div_selector.xpath('a') and div_selector.xpath('a/img'):
                 break
@@ -260,7 +260,7 @@ class WeiboSpider(CrawlSpider):
         image_item['image_list'].append(div_selector.xpath('a[1]/img/@src').extract_first())
 
         # 如果后面还存在其他图片， 则生成下一张图片的 Request 对象。
-        if div_selector.xpath('div[2]/a[1]/text()').extract_first() == '下一张':
+        if div_selector.xpath('div[2]/a[1]/text()').extract_first() == '下一张' and div_selector.xpath('div[2]/a[2]'):
             next_url = 'http://weibo.cn' + div_selector.xpath('div[2]/a[1]/@href').extract_first()
             yield scrapy.Request(
                 url = next_url,

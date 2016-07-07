@@ -12,6 +12,7 @@ from .items import UserInfoItem, FollowItem, FanItem, \
 
 
 
+# TODO 添加建立表的功能。
 class WeibospiderPipeline(object):
     def __init__(self, username, database):
         self.username = username
