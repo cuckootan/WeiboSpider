@@ -21,9 +21,9 @@ class WeiboSpider(CrawlSpider):
             callback = self.parse_user_info
         )
 
-    # 爬取当前用户的个人信息并返回， 并且生成关注， 粉丝， 微博基本信息的 Requst对象。
+    # 爬取当前用户的个人信息并返回，并且生成关注，粉丝，微博基本信息的 Requst对象。
     def parse_user_info(self, response):
-        # user_info_item 的结构为： {'user_id': xxx, 'user_name': xxx, 'gender': xxx, 'district': xxx}。
+        # user_info_item 的结构为：{'user_id': xxx, 'user_name': xxx, 'gender': xxx, 'district': xxx}。
         user_info_item = UserInfoItem(
             user_id = None,
             user_name = None,
@@ -41,17 +41,17 @@ class WeiboSpider(CrawlSpider):
         user_info_item['gender'] = div_selector.xpath('text()[3]').extract_first()[3:]
         user_info_item['district'] = div_selector.xpath('text()[4]').extract_first()[3:]
 
-        # 爬取当前用户的个人信息结束， 返回。
+        # 爬取当前用户的个人信息结束，返回。
         yield user_info_item
 
-        # follow_item 的结构为： {'user_id': xxx, 'follow_list': [1th_follow, 2th_follow, ...]}。
+        # follow_item 的结构为：{'user_id': xxx, 'follow_list': [1th_follow, 2th_follow, ...]}。
         follow_item = FollowItem(
             user_id = None,
             follow_list = None
         )
         follow_item['user_id'] = user_info_item['user_id']
         follow_item['follow_list'] = []
-        # fan_item 的结构为： {'user_id': xxx, 'fan_list': [1th_fan, 2th_fan, ...]}。
+        # fan_item 的结构为：{'user_id': xxx, 'fan_list': [1th_fan, 2th_fan, ...]}。
         fan_item = FanItem(
             user_id = None,
             fan_list = None
@@ -80,14 +80,14 @@ class WeiboSpider(CrawlSpider):
             callback = self.parse_post_info
         )
 
-    # 递归地爬取当前用户的所有关注的人， 爬取结束后返回。
+    # 递归地爬取当前用户的所有关注的人，爬取结束后返回。
     def parse_follow(self, response):
         follow_item = response.meta['item']
 
         for table_selector in response.xpath('/html/body/table'):
             follow_item['follow_list'].append(table_selector.xpath('tr/td[2]/a[1]/text()').extract_first())
 
-        # 如果后面还有， 则生成下一页关注人的 Request 对象。
+        # 如果后面还有，则生成下一页关注人的 Request 对象。
         if response.xpath('//*[@id="pagelist"]') \
                 and response.xpath('//*[@id="pagelist"]/form/div/a[1]/text()').extract_first() == '下页':
             next_url = 'http://weibo.cn' + response.xpath('//*[@id="pagelist"]/form/div/a[1]/@href').extract_first()
@@ -96,11 +96,11 @@ class WeiboSpider(CrawlSpider):
                 meta = {'item': follow_item},
                 callback = self.parse_follow
             )
-        # 否则， 返回当前用户的所有的关注的人。
+        # 否则，返回当前用户的所有的关注的人。
         else:
             yield follow_item
 
-    # 递归地爬取当前用户的所有粉丝， 爬取结束后返回。
+    # 递归地爬取当前用户的所有粉丝，爬取结束后返回。
     def parse_fan(self, response):
         fan_item = response.meta['item']
 
@@ -111,7 +111,7 @@ class WeiboSpider(CrawlSpider):
         for table_selector in div_selector.xpath('table'):
             fan_item['fan_list'].append(table_selector.xpath('tr/td[2]/a[1]/text()').extract_first())
 
-        # 如果后面还有， 则生成下一页粉丝的 Request 对象。
+        # 如果后面还有，则生成下一页粉丝的 Request 对象。
         if response.xpath('//*[@id="pagelist"]') \
                 and response.xpath('//*[@id="pagelist"]/form/div/a[1]/text()').extract_first() == '下页':
             next_url = 'http://weibo.cn' + response.xpath('//*[@id="pagelist"]/form/div/a[1]/@href').extract_first()
@@ -120,11 +120,11 @@ class WeiboSpider(CrawlSpider):
                 meta = {'item': fan_item},
                 callback = self.parse_fan
             )
-        # 否则， 返回当前用户的所有粉丝。
+        # 否则，返回当前用户的所有粉丝。
         else:
             yield fan_item
 
-    # 爬取当前用户的所有微博的基本信息以及文本。 对于每一条微博， 爬取完基本信息后以及文本后， 返回这两者， 然后生成这条微博相关的第一张图片， 第一页评论， 第一页转发的 Request 对象。
+    # 爬取当前用户的所有微博的基本信息以及文本。对于每一条微博，爬取完基本信息后以及文本后，返回这两者，然后生成这条微博相关的第一张图片，第一页评论, 第一页转发的 Request 对象。
     def parse_post_info(self, response):
         for div_selector in response.xpath('//div[@class="c"]'):
             if div_selector.xpath('@id'):
@@ -133,6 +133,7 @@ class WeiboSpider(CrawlSpider):
                         and div_selector.xpath('div[1]/span[1]/text()').extract_first()[:2] == '转发':
                     continue
 
+                # post_info_item 的结构为: {'user_id': xxx, 'post_id': xxx, 'publish_time': xxx}。
                 post_info_item = PostInfoItem(
                     user_id = None,
                     post_id = None,
@@ -141,6 +142,7 @@ class WeiboSpider(CrawlSpider):
                 post_info_item['user_id'] = response.meta['user_id']
                 post_info_item['post_id'] = div_selector.xpath('@id').extract_first()
 
+                # text_item 的结构体为: {'user_id': xxx, 'post_id': xxx, 'text': xxx}
                 text_item = TextItem(
                     user_id = None,
                     post_id = None,
@@ -180,13 +182,13 @@ class WeiboSpider(CrawlSpider):
                 yield post_info_item
                 yield text_item
 
-                # comment_item 的结构为： {'user_id': xxx, 'post_id': xxx, 'comment_list': [json.dumps({'comment_user': 1th_user, 'comment_text': 1th_text, 'comment_time': 1th_time}), json.dumps({'comment_user': 2nd_user, 'comment_text': 2nd_text, 'comment_time': 2nd_time}), ...]}。
+                # comment_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'comment_list': [json.dumps({'comment_user': 1th_user, 'comment_text': 1th_text, 'comment_time': 1th_time}), json.dumps({'comment_user': 2nd_user, 'comment_text': 2nd_text, 'comment_time': 2nd_time}), ...]}。
                 comment_item = CommentItem(
                     user_id = None,
                     post_id = None,
                     comment_list = None
                 )
-                # forward_item 的结构为： {'user_id': xxx, 'post_id': xxx, 'forward_list': [json.dumps({'forward_user': 1th_user, 'forward_time': 1th_time}), json.dumps({'forward_user': 2nd_user, 'forward_time': 2nd_time}), ...]}。
+                # forward_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'forward_list': [json.dumps({'forward_user': 1th_user, 'forward_time': 1th_time}), json.dumps({'forward_user': 2nd_user, 'forward_time': 2nd_time}), ...]}。
                 forward_item = ForwardItem(
                     user_id = None,
                     post_id = None,
@@ -200,9 +202,9 @@ class WeiboSpider(CrawlSpider):
                 forward_item['post_id'] = post_info_item['post_id']
                 forward_item['forward_list'] = []
 
-                # 如果存在图片， 则生成者条微博的第一张图片的 Request 对象。
+                # 如果存在图片，则生成者条微博的第一张图片的 Request 对象。
                 if image_start_url:
-                    # image_item 的结构为： {'user_id': xxx, 'post_id': xxx, 'image_list': [1th_image, 2nd_image, ...]}。
+                    # image_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'image_list': [1th_image, 2nd_image, ...]}。
                     image_item = ImageItem(
                         user_id = None,
                         post_id = None,
@@ -233,7 +235,7 @@ class WeiboSpider(CrawlSpider):
                     callback = self.parse_forward
                 )
 
-        # 如果当前用户还存在其他微博， 则继续爬取它们的基本信息以及文本。由于每条微博是一个 Item， 在爬取每一条微博的基本信息和文本后就会返回，因此当后面不存在微博时， 不需要另作返回。
+        # 如果当前用户还存在其他微博，则继续爬取它们的基本信息以及文本。由于每条微博是一个 Item，在爬取每一条微博的基本信息和文本后就会返回，因此当后面不存在微博时，不需要另作返回。
         if response.xpath('//div[@class="pa" and @id="pagelist"]') \
                 and response.xpath('//div[@class="pa" and @id="pagelist"]/form/div/a[1]/text()').extract_first() == '下页':
             next_url = 'http://weibo.cn' \
@@ -244,7 +246,7 @@ class WeiboSpider(CrawlSpider):
                 callback = self.parse_post_info
             )
 
-    # 递归地爬取某条微博的所有图片， 爬取结束后返回。
+    # 递归地爬取某条微博的所有图片，爬取结束后返回。
     def parse_image(self, response):
         image_item = response.meta['item']
 
@@ -259,7 +261,7 @@ class WeiboSpider(CrawlSpider):
 
         image_item['image_list'].append(div_selector.xpath('a[1]/img/@src').extract_first())
 
-        # 如果后面还存在其他图片， 则生成下一张图片的 Request 对象。
+        # 如果后面还存在其他图片，则生成下一张图片的 Request 对象。
         if div_selector.xpath('div[2]/a[1]/text()').extract_first() == '下一张' and div_selector.xpath('div[2]/a[2]'):
             next_url = 'http://weibo.cn' + div_selector.xpath('div[2]/a[1]/@href').extract_first()
             yield scrapy.Request(
@@ -267,11 +269,11 @@ class WeiboSpider(CrawlSpider):
                 meta = {'item': image_item},
                 callback = self.parse_image
             )
-        # 否则， 返回这条微博的所有图像。
+        # 否则，返回这条微博的所有图像。
         else:
             yield image_item
 
-    # 递归地爬取某条微博的所有评论， 爬去结束后返回。
+    # 递归地爬取某条微博的所有评论，爬去结束后返回。
     def parse_comment(self, response):
         comment_item = response.meta['item']
 
@@ -293,7 +295,7 @@ class WeiboSpider(CrawlSpider):
                     'comment_time': comment_time
                 }))
 
-        # 如果后面还存在着其他评论， 则生成下一页评论的 Request 对象。
+        # 如果后面还存在着其他评论，则生成下一页评论的 Request 对象。
         if response.xpath('//div[@class="pa" and @id="pagelist"]') \
                 and response.xpath('//div[@class="pa" and @id="pagelist"]/form/div/a[1]/text()').extract_first() == '下页':
             next_url = 'http://weibo.cn' \
@@ -303,11 +305,11 @@ class WeiboSpider(CrawlSpider):
                 meta = {'item': comment_item},
                 callback = self.parse_comment
             )
-        # 否则， 返回这条微博的所有评论。
+        # 否则，返回这条微博的所有评论。
         else:
             yield comment_item
 
-    # 递归地爬取某条微博的所有的转发， 爬取结束后返回。
+    # 递归地爬取某条微博的所有的转发，爬取结束后返回。
     def parse_forward(self, response):
         forward_item = response.meta['item']
 
@@ -321,7 +323,7 @@ class WeiboSpider(CrawlSpider):
                     'forward_time': forward_time
                 }))
 
-        # 如果后面还存在着其他转发， 则生成下一页转发的 Request 对象。
+        # 如果后面还存在着其他转发，则生成下一页转发的 Request 对象。
         if response.xpath('//div[@class="pa" and @id="pagelist"]') \
                 and response.xpath('//div[@class="pa" and @id="pagelist"]/form/div/a[1]/text()').extract_first() == '下页':
             next_url = 'http://weibo.cn' \
@@ -331,7 +333,7 @@ class WeiboSpider(CrawlSpider):
                 meta = {'item': forward_item},
                 callback = self.parse_forward
             )
-        # 否则， 返回这条微博的所有的转发内容， 然后生成第一页点赞的 Request 对象。之所以不在 parse_post_info 里生成，是因为其中返回的 response 里没有正确的点赞 url（其中的 url 请求后相当于是点赞）。
+        # 否则，返回这条微博的所有的转发内容，然后生成第一页点赞的 Request 对象。之所以不在 parse_post_info 里生成，是因为其中返回的 response 里没有正确的点赞 url（其中的 url 请求后相当于是点赞）。
         else:
             yield forward_item
 
@@ -339,7 +341,7 @@ class WeiboSpider(CrawlSpider):
                 if div_selector.xpath('span[@class="pms"]'):
                     break
 
-            # thumbup_item 的结构为： {'user_id': xxx, 'post_id': xxx, 'thumbup_list': [json.dumps({'thumbup_user': 1th_user, 'thumbup_time': 1th_time}), json.dumps({'thumbup_user': 2nd_user, 'thumbup_time': 2nd_time}), ...]}。
+            # thumbup_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'thumbup_list': [json.dumps({'thumbup_user': 1th_user, 'thumbup_time': 1th_time}), json.dumps({'thumbup_user': 2nd_user, 'thumbup_time': 2nd_time}), ...]}。
             thumbup_item = ThumbupItem(
                 user_id = None,
                 post_id = None,
@@ -356,7 +358,7 @@ class WeiboSpider(CrawlSpider):
                 callback = self.parse_thumbup
             )
 
-    # 爬取某条微博的所有点赞信息， 爬取结束后返回。
+    # 爬取某条微博的所有点赞信息，爬取结束后返回。
     def parse_thumbup(self, response):
         thumbup_item = response.meta['item']
 
@@ -370,7 +372,7 @@ class WeiboSpider(CrawlSpider):
                     'thumbup_time': thumbup_time
                 }))
 
-        # 如果后面还存在着其他点赞， 则生成下一页点赞的 Request 对象。
+        # 如果后面还存在着其他点赞，则生成下一页点赞的 Request 对象。
         if response.xpath('//div[@class="pa" and @id="pagelist"]') \
                 and response.xpath('//div[@class="pa" and @id="pagelist"]/form/div/a[1]/text()').extract_first() == '下页':
             next_url = 'http://weibo.cn' \
@@ -380,6 +382,6 @@ class WeiboSpider(CrawlSpider):
                 meta = {'item': thumbup_item},
                 callback = self.parse_thumbup
             )
-        # 否则， 返回该条微博的所有点赞信息。
+        # 否则，返回该条微博的所有点赞信息。
         else:
             yield thumbup_item
