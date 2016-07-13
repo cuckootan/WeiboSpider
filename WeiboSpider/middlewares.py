@@ -1,20 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-__author__ = "Jason"
+__author__ = 'Jason'
 
 from . import cookies
 
 
 
-id_info = {"raw_username": "joeyt.firefly@outlook.com", "raw_password": "mpn6839_PIG"}
-cookie = cookies.Cookies(id_info["raw_username"], id_info["raw_password"]).get_cookie()
-
-user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:47.0) Gecko/20100101 Firefox/47.0"
-
 class CookiesMiddleware(object):
-    def process_request(self, request, spider):
-        request.cookies = cookie
+    def __init__(self, username, password):
+        self.cookie = cookies.Cookies(username, password).get_cookie()
 
-class UserAgentMiddleware(object):
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls(
+            username = crawler.settings.get('WEIBO_USERNAME'),
+            database = crawler.settings.get('WEIBO_PASSWORD')
+        )
+
     def process_request(self, request, spider):
-        request.headers["User-Agent"] = user_agent
+        request.cookies = self.cookie

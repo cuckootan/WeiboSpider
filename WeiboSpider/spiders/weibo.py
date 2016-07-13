@@ -202,7 +202,7 @@ class WeiboSpider(CrawlSpider):
                 forward_item['post_id'] = post_info_item['post_id']
                 forward_item['forward_list'] = []
 
-                # 如果存在图片，则生成者条微博的第一张图片的 Request 对象。
+                # 如果存在图片，则生成这条微博的第一张图片的 Request 对象。
                 if image_start_url:
                     # image_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'image_list': [1th_image, 2nd_image, ...]}。
                     image_item = ImageItem(

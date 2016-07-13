@@ -16,7 +16,7 @@ NEWSPIDER_MODULE = 'WeiboSpider.spiders'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'WeiboSpider (+http://www.yourdomain.com)'
+USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:47.0) Gecko/20100101 Firefox/47.0'
 
 # Obey robots.txt rules
 #ROBOTSTXT_OBEY = True
@@ -39,10 +39,10 @@ DOWNLOAD_DELAY = 5
 #TELNETCONSOLE_ENABLED = False
 
 # Override the default request headers:
-#DEFAULT_REQUEST_HEADERS = {
-#   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-#   'Accept-Language': 'en',
-#}
+DEFAULT_REQUEST_HEADERS = {
+   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+   'Accept-Language': 'en-US,en;q=0.5',
+}
 
 # Enable or disable spider middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
@@ -53,8 +53,7 @@ DOWNLOAD_DELAY = 5
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 DOWNLOADER_MIDDLEWARES = {
-    'WeiboSpider.middlewares.CookiesMiddleware': 401,
-    'WeiboSpider.middlewares.UserAgentMiddleware': 402
+    'WeiboSpider.middlewares.CookiesMiddleware': 401
 }
 
 # Enable or disable extensions
@@ -68,6 +67,8 @@ DOWNLOADER_MIDDLEWARES = {
 ITEM_PIPELINES = {
     'WeiboSpider.pipelines.WeibospiderPipeline': 300,
 }
+
+LOG_LEVEL = 'INFO'
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html
@@ -90,5 +91,8 @@ ITEM_PIPELINES = {
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-POSTGRESQL_USERNAME = "cuckootan"
-POSTGRESQL_DATABASE = "weibo"
+WEIBO_USERNAME = 'joeyt.firefly@outlook.com'
+WEIBO_PASSWORD = 'mpn6839_PIG'
+
+POSTGRESQL_USERNAME = 'cuckootan'
+POSTGRESQL_DATABASE = 'weibo'
