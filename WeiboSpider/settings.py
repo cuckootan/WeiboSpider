@@ -91,8 +91,15 @@ LOG_LEVEL = 'INFO'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
+# Your weibo username.
 WEIBO_USERNAME = 'joeyt.firefly@outlook.com'
+# Your weibo password.
 WEIBO_PASSWORD = 'mpn6839_PIG'
 
+# Your postgresql username.
 POSTGRESQL_USERNAME = 'cuckootan'
+# Your postgresql databaes.
 POSTGRESQL_DATABASE = 'weibo'
+
+# The user id you want to crawl.
+CRAWLED_WEIBO_ID_LIST = ['1197161814', '2636180571']

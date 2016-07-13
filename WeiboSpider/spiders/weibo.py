@@ -15,11 +15,15 @@ class WeiboSpider(CrawlSpider):
     def start_requests(self):
         print('start...')
 
-        yield scrapy.Request(
-            url = 'http://weibo.cn/3592470455/info',
-            meta = {'user_id': '3592470455'},
-            callback = self.parse_user_info
-        )
+        crawled_weibo_id_list = self.settings.get('CRAWLED_WEIBO_ID_LIST')
+
+        for user_id in crawled_weibo_id_list:
+            user_info_url = 'http://weibo.cn/' + user_id + '/info'
+            yield scrapy.Request(
+                url = user_info_url,
+                meta = {'user_id': user_id},
+                callback = self.parse_user_info
+            )
 
     # 爬取当前用户的个人信息并返回，并且生成关注，粉丝，微博基本信息的 Requst对象。
     def parse_user_info(self, response):
@@ -59,23 +63,26 @@ class WeiboSpider(CrawlSpider):
         fan_item['user_id'] = user_info_item['user_id']
         fan_item['fan_list'] = []
 
+        follow_start_url = 'http://weibo.cn/' + user_info_item['user_id'] + '/follow?page=1'
         # 生成关注的 Request 对象，用以爬取当前用户关注的人。
         yield scrapy.Request(
-            url = 'http://weibo.cn/3592470455/follow?page=1',
+            url = follow_start_url,
             meta = {'item': follow_item},
             callback = self.parse_follow
         )
 
+        fan_start_url = 'http://weibo.cn/' + user_info_item['user_id'] + '/fans?page=1'
         # 生成粉丝的 Request 对象，用以爬取当前用户的粉丝。
         yield scrapy.Request(
-            url = 'http://weibo.cn/3592470455/fans?page=1',
+            url = fan_start_url,
             meta = {'item': fan_item},
             callback = self.parse_fan
         )
 
+        post_info_start_url = 'http://weibo.cn/' + user_info_item['user_id'] + '/profile?page=1'
         # 生成微博基本信息的 Request 对象，用以爬取当前用户的所有微博的基本信息。
         yield scrapy.Request(
-            url = 'http://weibo.cn/3592470455/profile?page=1',
+            url = post_info_start_url,
             meta = {'user_id': user_info_item['user_id']},
             callback = self.parse_post_info
         )
@@ -271,6 +278,7 @@ class WeiboSpider(CrawlSpider):
             )
         # 否则，返回这条微博的所有图像。
         else:
+            self.logger.info('The post_id {0:s} includes {1:d} images'.format(image_item['post_id'], len(image_item['image_list'])))
             yield image_item
 
     # 递归地爬取某条微博的所有评论，爬去结束后返回。
@@ -307,6 +315,7 @@ class WeiboSpider(CrawlSpider):
             )
         # 否则，返回这条微博的所有评论。
         else:
+            self.logger.info('The post_id {0:s} includes {1:d} comments'.format(comment_item['post_id'], len(comment_item['comment_list'])))
             yield comment_item
 
     # 递归地爬取某条微博的所有的转发，爬取结束后返回。
@@ -335,6 +344,7 @@ class WeiboSpider(CrawlSpider):
             )
         # 否则，返回这条微博的所有的转发内容，然后生成第一页点赞的 Request 对象。之所以不在 parse_post_info 里生成，是因为其中返回的 response 里没有正确的点赞 url（其中的 url 请求后相当于是点赞）。
         else:
+            self.logger.info('The post_id {0:s} includes {1:d} forwards'.format(forward_item['post_id'], len(forward_item['forward_list'])))
             yield forward_item
 
             for div_selector in response.xpath('/html/body/div'):
@@ -384,4 +394,5 @@ class WeiboSpider(CrawlSpider):
             )
         # 否则，返回该条微博的所有点赞信息。
         else:
+            self.logger.info('The post_id {0:s} includes {1:d} thumb-ups'.format(thumbup_item['post_id'], len(thumbup_item['thumbup_list'])))
             yield thumbup_item

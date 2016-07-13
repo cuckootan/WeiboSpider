@@ -14,7 +14,7 @@ class CookiesMiddleware(object):
     def from_crawler(cls, crawler):
         return cls(
             username = crawler.settings.get('WEIBO_USERNAME'),
-            database = crawler.settings.get('WEIBO_PASSWORD')
+            password = crawler.settings.get('WEIBO_PASSWORD')
         )
 
     def process_request(self, request, spider):
