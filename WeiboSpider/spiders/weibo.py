@@ -13,7 +13,7 @@ class WeiboSpider(CrawlSpider):
     allowed_domains = ['weibo.cn']
 
     def start_requests(self):
-        print('start...')
+        self.logger.info('start...')
 
         crawled_weibo_id_list = self.settings.get('CRAWLED_WEIBO_ID_LIST')
 
@@ -348,7 +348,7 @@ class WeiboSpider(CrawlSpider):
             yield forward_item
 
             for div_selector in response.xpath('/html/body/div'):
-                if div_selector.xpath('span[@class="pms"]'):
+                if div_selector.xpath('span[3]'):
                     break
 
             # thumbup_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'thumbup_list': [json.dumps({'thumbup_user': 1th_user, 'thumbup_time': 1th_time}), json.dumps({'thumbup_user': 2nd_user, 'thumbup_time': 2nd_time}), ...]}。

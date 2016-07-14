@@ -5,7 +5,7 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
-import psycopg2
+import psycopg2, logging
 from psycopg2 import errorcodes
 from .items import UserInfoItem, FollowItem, FanItem, \
     PostInfoItem, TextItem, ImageItem, CommentItem, ForwardItem, ThumbupItem
@@ -17,6 +17,19 @@ class WeibospiderPipeline(object):
     def __init__(self, username, database):
         self.username = username
         self.database = database
+
+        self.user_info_item_count = 1
+        self.follow_item_count = 1
+        self.fan_item_count = 1
+        self.post_info_item_count = 1
+        self.text_item_count = 1
+        self.image_item_count = 1
+        self.comment_item_count = 1
+        self.forward_item_count = 1
+        self.thumbup_item_count = 1
+
+        self.logger = logging.getLogger(__name__)
+        self.logger.setLevel(logging.INFO)
 
     @classmethod
     def from_crawler(cls, crawler):
@@ -32,9 +45,9 @@ class WeibospiderPipeline(object):
                 database = self.database
             )
             self.cursor = self.connector.cursor()
-            print('Conneting to database successfully!')
+            self.logger.info('Conneting to database successfully!')
         except psycopg2.Error as e:
-            print(
+            self.logger.error(
                 'Failed to connect database. Returned: %s'
                   % errorcodes.lookup(e.pgcode)
             )
@@ -53,8 +66,10 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
+                self.logger.info('Write a user_info item into database. Seq: {0:d}'.format(self.user_info_item_count))
+                self.user_info_item_count += 1
             except psycopg2.Error as e:
-                print(
+                self.logger.error(
                     "Failed to insert data into user_info table. Returned: %s"
                       % errorcodes.lookup(e.pgcode)
                 )
@@ -66,8 +81,10 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
+                self.logger.info('Write a follow item into database. Seq: {0:d}'.format(self.follow_item_count))
+                self.follow_item_count += 1
             except psycopg2.Error as e:
-                print(
+                self.logger.error(
                     "Failed to insert data into follow table. Returned: %s"
                       % (errorcodes.lookup(e.pgcode))
                 )
@@ -79,8 +96,10 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
+                self.logger.info('Write a fan item into database. Seq: {0:d}'.format(self.fan_item_count))
+                self.fan_item_count += 1
             except psycopg2.Error as e:
-                print(
+                self.logger.error(
                     "Failed to insert data into fan table. Returned: %s"
                       % (errorcodes.lookup(e.pgcode))
                 )
@@ -92,8 +111,10 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
+                self.logger.info('Write a post_info item into database. Seq: {0:d}'.format(self.post_info_item_count))
+                self.post_info_item_count += 1
             except psycopg2.Error as e:
-                print(
+                self.logger.error(
                     "Failed to insert data into follow table. Returned: %s"
                       % (errorcodes.lookup(e.pgcode))
                 )
@@ -105,8 +126,10 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
+                self.logger.info('Write a text item into database. Seq: {0:d}'.format(self.text_item_count))
+                self.text_item_count += 1
             except psycopg2.Error as e:
-                print(
+                self.logger.error(
                     "Failed to insert data into text table. Returned: %s"
                       % (errorcodes.lookup(e.pgcode))
                 )
@@ -118,8 +141,10 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
+                self.logger.info('Write an image item into database. Seq: {0:d}'.format(self.image_item_count))
+                self.image_item_count += 1
             except psycopg2.Error as e:
-                print(
+                self.logger.error(
                     "Failed to insert data into image table. Returned: %s"
                       % (errorcodes.lookup(e.pgcode))
                 )
@@ -131,8 +156,10 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
+                self.logger.info('Write a comment item into database. Seq: {0:d}'.format(self.comment_item_count))
+                self.comment_item_count += 1
             except psycopg2.Error as e:
-                print(
+                self.logger.error(
                     "Failed to insert data into comment table. Returned: %s"
                     % (errorcodes.lookup(e.pgcode))
                 )
@@ -144,8 +171,10 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
+                self.logger.info('Write a forward item into database. Seq: {0:d}'.format(self.forward_item_count))
+                self.forward_item_count += 1
             except psycopg2.Error as e:
-                print(
+                self.logger.error(
                     "Failed to insert data into forward table. Returned: %s"
                     % (errorcodes.lookup(e.pgcode))
                 )
@@ -157,8 +186,10 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
+                self.logger.info('Write a thumb-up item into database. Seq: {0:d}'.format(self.thumbup_item_count))
+                self.thumbup_item_count += 1
             except psycopg2.Error as e:
-                print(
+                self.logger.error(
                     "Failed to insert data into thumbup table. Returned: %s"
                     % (errorcodes.lookup(e.pgcode))
                 )
