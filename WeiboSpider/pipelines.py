@@ -66,7 +66,10 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write a user_info item into database. Seq: {0:d}'.format(self.user_info_item_count))
+                self.logger.info('Write a user_info item (user_id: {0:s}) into database. Seq: {1:d}'.format(
+                    item['user_id'],
+                    self.user_info_item_count
+                ))
                 self.user_info_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
@@ -81,7 +84,10 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write a follow item into database. Seq: {0:d}'.format(self.follow_item_count))
+                self.logger.info('Write a follow item (user_id: {0:s}) into database. Seq: {1:d}'.format(
+                    item['user_id'],
+                    self.follow_item_count
+                ))
                 self.follow_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
@@ -96,7 +102,10 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write a fan item into database. Seq: {0:d}'.format(self.fan_item_count))
+                self.logger.info('Write a fan item (user_id: {0:s}) into database. Seq: {1:d}'.format(
+                    item['user_id'],
+                    self.fan_item_count
+                ))
                 self.fan_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
@@ -111,7 +120,11 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write a post_info item into database. Seq: {0:d}'.format(self.post_info_item_count))
+                self.logger.info('Write a post_info item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                    item['user_id'],
+                    item['post_id'],
+                    self.post_info_item_count
+                ))
                 self.post_info_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
@@ -126,7 +139,11 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write a text item into database. Seq: {0:d}'.format(self.text_item_count))
+                self.logger.info('Write a text item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                    item['user_id'],
+                    item['post_id'],
+                    self.text_item_count
+                ))
                 self.text_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
@@ -141,7 +158,11 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write an image item into database. Seq: {0:d}'.format(self.image_item_count))
+                self.logger.info('Write an image item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                    item['user_id'],
+                    item['post_id'],
+                    self.image_item_count
+                ))
                 self.image_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
@@ -156,7 +177,11 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write a comment item into database. Seq: {0:d}'.format(self.comment_item_count))
+                self.logger.info('Write a comment item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                    item['user_id'],
+                    item['post_id'],
+                    self.comment_item_count
+                ))
                 self.comment_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
@@ -171,7 +196,11 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write a forward item into database. Seq: {0:d}'.format(self.forward_item_count))
+                self.logger.info('Write a forward item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                    item['user_id'],
+                    item['post_id'],
+                    self.forward_item_count
+                ))
                 self.forward_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
@@ -186,7 +215,11 @@ class WeibospiderPipeline(object):
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write a thumb-up item into database. Seq: {0:d}'.format(self.thumbup_item_count))
+                self.logger.info('Write a thumb-up item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                    item['user_id'],
+                    item['post_id'],
+                    self.thumbup_item_count
+                ))
                 self.thumbup_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(

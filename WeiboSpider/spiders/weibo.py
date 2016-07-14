@@ -225,6 +225,7 @@ class WeiboSpider(CrawlSpider):
                     yield scrapy.Request(
                         url = image_start_url,
                         meta = {'item': image_item},
+                        priority = 1,
                         callback = self.parse_image
                     )
 
@@ -232,6 +233,7 @@ class WeiboSpider(CrawlSpider):
                 yield scrapy.Request(
                     url = comment_start_url,
                     meta = {'item': comment_item},
+                    priority = 1,
                     callback = self.parse_comment
                 )
 
@@ -239,6 +241,7 @@ class WeiboSpider(CrawlSpider):
                 yield scrapy.Request(
                     url = forward_start_url,
                     meta = {'item': forward_item},
+                    priority = 1,
                     callback = self.parse_forward
                 )
 
@@ -270,15 +273,21 @@ class WeiboSpider(CrawlSpider):
 
         # 如果后面还存在其他图片，则生成下一张图片的 Request 对象。
         if div_selector.xpath('div[2]/a[1]/text()').extract_first() == '下一张' and div_selector.xpath('div[2]/a[2]'):
+            print('3')
             next_url = 'http://weibo.cn' + div_selector.xpath('div[2]/a[1]/@href').extract_first()
             yield scrapy.Request(
                 url = next_url,
                 meta = {'item': image_item},
+                priority = 1,
                 callback = self.parse_image
             )
         # 否则，返回这条微博的所有图像。
         else:
-            self.logger.info('The post_id {0:s} includes {1:d} images'.format(image_item['post_id'], len(image_item['image_list'])))
+            self.logger.info('The post (user_id: {0:s} post_id: {1:s}) includes {2:d} images'.format(
+                image_item['user_id'],
+                image_item['post_id'],
+                len(image_item['image_list'])
+            ))
             yield image_item
 
     # 递归地爬取某条微博的所有评论，爬去结束后返回。
@@ -311,11 +320,16 @@ class WeiboSpider(CrawlSpider):
             yield scrapy.Request(
                 url = next_url,
                 meta = {'item': comment_item},
+                priority = 1,
                 callback = self.parse_comment
             )
         # 否则，返回这条微博的所有评论。
         else:
-            self.logger.info('The post_id {0:s} includes {1:d} comments'.format(comment_item['post_id'], len(comment_item['comment_list'])))
+            self.logger.info('The post (user_id: {0:s} post_id: {1:s}) includes {2:d} comments'.format(
+                comment_item['user_id'],
+                comment_item['post_id'],
+                len(comment_item['comment_list'])
+            ))
             yield comment_item
 
     # 递归地爬取某条微博的所有的转发，爬取结束后返回。
@@ -340,11 +354,16 @@ class WeiboSpider(CrawlSpider):
             yield scrapy.Request(
                 url = next_url,
                 meta = {'item': forward_item},
+                priority = 1,
                 callback = self.parse_forward
             )
         # 否则，返回这条微博的所有的转发内容，然后生成第一页点赞的 Request 对象。之所以不在 parse_post_info 里生成，是因为其中返回的 response 里没有正确的点赞 url（其中的 url 请求后相当于是点赞）。
         else:
-            self.logger.info('The post_id {0:s} includes {1:d} forwards'.format(forward_item['post_id'], len(forward_item['forward_list'])))
+            self.logger.info('The post (user_id: {0:s} post_id: {1:s}) includes {2:d} forwards'.format(
+                forward_item['user_id'],
+                forward_item['post_id'],
+                len(forward_item['forward_list'])
+            ))
             yield forward_item
 
             for div_selector in response.xpath('/html/body/div'):
@@ -365,6 +384,7 @@ class WeiboSpider(CrawlSpider):
             yield scrapy.Request(
                 url = start_thumbup_url,
                 meta = {'item': thumbup_item},
+                priority = 1,
                 callback = self.parse_thumbup
             )
 
@@ -390,9 +410,14 @@ class WeiboSpider(CrawlSpider):
             yield scrapy.Request(
                 url = next_url,
                 meta = {'item': thumbup_item},
+                priority = 1,
                 callback = self.parse_thumbup
             )
         # 否则，返回该条微博的所有点赞信息。
         else:
-            self.logger.info('The post_id {0:s} includes {1:d} thumb-ups'.format(thumbup_item['post_id'], len(thumbup_item['thumbup_list'])))
+            self.logger.info('The post (user_id: {0:s} post_id: {1:s}) includes {2:d} thumb-ups'.format(
+                thumbup_item['user_id'],
+                thumbup_item['post_id'],
+                len(thumbup_item['thumbup_list'])
+            ))
             yield thumbup_item
