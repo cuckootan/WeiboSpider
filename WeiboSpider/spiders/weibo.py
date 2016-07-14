@@ -2,6 +2,7 @@
 
 import scrapy, json, re
 from scrapy.spiders import CrawlSpider
+from datetime import datetime, timedelta
 
 from ..items import UserInfoItem, FollowItem, FanItem, \
     PostInfoItem, TextItem, ImageItem, CommentItem, ForwardItem, ThumbupItem
@@ -162,12 +163,17 @@ class WeiboSpider(CrawlSpider):
                 # 如果存在图像。
                 if div_selector.xpath('div[2]'):
                     post_info_item['publish_time'] = div_selector.xpath('div[2]/span[@class="ct"]/text()').extract_first()
+                    image_start_url = div_selector.xpath('div[2]/a[1]/@href').extract_first()
 
                     for a_selector in div_selector.xpath('div[2]/a'):
                         temp_str = a_selector.xpath('text()').extract_first()
 
                         if not temp_str:
-                            image_start_url = a_selector.xpath('@href').extract_first()
+                            continue
+
+                        if temp_str[:1] == '赞':
+                            start_thumbup_url = re.split(r'(http://weibo.cn/attitude/[^/]+)', a_selector.xpath('@href').extract_first())[1] \
+                                                + '?#attitude'
                         elif temp_str[:2] == '转发':
                             forward_start_url = a_selector.xpath('@href').extract_first()
                         elif temp_str[:2] == '评论':
@@ -178,12 +184,16 @@ class WeiboSpider(CrawlSpider):
 
                     for a_selector in div_selector.xpath('div[1]/a'):
                         temp_str = a_selector.xpath('text()').extract_first()
-                        if temp_str[:2] == '转发':
+                        if temp_str[:1] == '赞':
+                            start_thumbup_url = re.split(r'(http://weibo.cn/attitude/[^/]+)', a_selector.xpath('@href').extract_first())[1] \
+                                                + '?#attitude'
+                        elif temp_str[:2] == '转发':
                             forward_start_url = a_selector.xpath('@href').extract_first()
                         elif temp_str[:2] == '评论':
                             comment_start_url = a_selector.xpath('@href').extract_first()
 
-                post_info_item['publish_time'] = re.split('来自', post_info_item['publish_time'])[0].strip()
+                publish_time = re.split('来自', post_info_item['publish_time'])[0].strip()
+                post_info_item['publish_time'] = str(self.handle_time(self.get_time(response.headers['date']), publish_time))
 
                 # 返回当前用户的当前微博的基本信息以及文本。
                 yield post_info_item
@@ -201,6 +211,12 @@ class WeiboSpider(CrawlSpider):
                     post_id = None,
                     forward_list = None
                 )
+                # thumbup_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'thumbup_list': [json.dumps({'thumbup_user': 1th_user, 'thumbup_time': 1th_time}), json.dumps({'thumbup_user': 2nd_user, 'thumbup_time': 2nd_time}), ...]}。
+                thumbup_item = ThumbupItem(
+                    user_id = None,
+                    post_id = None,
+                    thumbup_list = None
+                )
 
                 comment_item['user_id'] = post_info_item['user_id']
                 comment_item['post_id'] = post_info_item['post_id']
@@ -208,6 +224,9 @@ class WeiboSpider(CrawlSpider):
                 forward_item['user_id'] = post_info_item['user_id']
                 forward_item['post_id'] = post_info_item['post_id']
                 forward_item['forward_list'] = []
+                thumbup_item['user_id'] = post_info_item['user_id']
+                thumbup_item['post_id'] = post_info_item['post_id']
+                thumbup_item['thumbup_list'] = []
 
                 # 如果存在图片，则生成这条微博的第一张图片的 Request 对象。
                 if image_start_url:
@@ -244,6 +263,13 @@ class WeiboSpider(CrawlSpider):
                     priority = 1,
                     callback = self.parse_forward
                 )
+                # 生成这条微博的第一页点赞的 Request 对象。
+                yield scrapy.Request(
+                    url = start_thumbup_url,
+                    meta = {'item': thumbup_item},
+                    priority = 1,
+                    callback = self.parse_thumbup
+                )
 
         # 如果当前用户还存在其他微博，则继续爬取它们的基本信息以及文本。由于每条微博是一个 Item，在爬取每一条微博的基本信息和文本后就会返回，因此当后面不存在微博时，不需要另作返回。
         if response.xpath('//div[@class="pa" and @id="pagelist"]') \
@@ -254,6 +280,30 @@ class WeiboSpider(CrawlSpider):
                 url = next_url,
                 meta = {'user_id': post_info_item['user_id']},
                 callback = self.parse_post_info
+            )
+    def get_time(self, post_time):
+        return datetime.strptime(post_time.decode('utf-8'), '%a, %d %b %Y %H:%M:%S %Z')
+
+    def handle_time(self, now_time, post_time):
+        if re.match(r'\d+分钟前', post_time):
+            return now_time - timedelta(minutes = int(re.findall('\d+', post_time)[0]))
+        elif re.match(r'今天', post_time):
+            temp_time = re.findall(r'\d+', post_time)
+            return datetime(
+                year = now_time.date().year,
+                month = now_time.date().month,
+                day = now_time.date().day,
+                hour = int(temp_time[0]),
+                minute = int(temp_time[1])
+            )
+        else:
+            temp_time = re.findall(r'\d+', post_time)
+            return datetime(
+                year = now_time.date().year,
+                month = int(temp_time[0]),
+                day = int(temp_time[1]),
+                hour = int(temp_time[2]),
+                minute = int(temp_time[3])
             )
 
     # 递归地爬取某条微博的所有图片，爬取结束后返回。
@@ -305,6 +355,7 @@ class WeiboSpider(CrawlSpider):
 
                 comment_text = div_selector.xpath('span[@class="ctt"]/text()').extract_first()
                 comment_time = div_selector.xpath('span[@class="ct"]/text()').extract_first()
+                comment_time = str(self.handle_time(self.get_time(response.headers['date']), comment_time))
 
                 comment_item['comment_list'].append(json.dumps({
                     'comment_user': comment_user,
@@ -340,6 +391,7 @@ class WeiboSpider(CrawlSpider):
             if div_selector.xpath('span[@class="ct"]'):
                 forward_user = div_selector.xpath('a/text()').extract_first()
                 forward_time = re.split('来自', div_selector.xpath('span[@class="ct"]/text()').extract_first())[0].strip()
+                forward_time = str(self.handle_time(self.get_time(response.headers['date']), forward_time))
 
                 forward_item['forward_list'].append(json.dumps({
                     'forward_user': forward_user,
@@ -366,28 +418,6 @@ class WeiboSpider(CrawlSpider):
             ))
             yield forward_item
 
-            for div_selector in response.xpath('/html/body/div'):
-                if div_selector.xpath('span[3]'):
-                    break
-
-            # thumbup_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'thumbup_list': [json.dumps({'thumbup_user': 1th_user, 'thumbup_time': 1th_time}), json.dumps({'thumbup_user': 2nd_user, 'thumbup_time': 2nd_time}), ...]}。
-            thumbup_item = ThumbupItem(
-                user_id = None,
-                post_id = None,
-                thumbup_list = None
-            )
-            thumbup_item['user_id'] = forward_item['user_id']
-            thumbup_item['post_id'] = forward_item['post_id']
-            thumbup_item['thumbup_list'] = []
-
-            start_thumbup_url = 'http://weibo.cn' + div_selector.xpath('span[3]/a/@href').extract_first()
-            yield scrapy.Request(
-                url = start_thumbup_url,
-                meta = {'item': thumbup_item},
-                priority = 1,
-                callback = self.parse_thumbup
-            )
-
     # 爬取某条微博的所有点赞信息，爬取结束后返回。
     def parse_thumbup(self, response):
         thumbup_item = response.meta['item']
@@ -396,6 +426,7 @@ class WeiboSpider(CrawlSpider):
             if div_selector.xpath('span[@class="ct"]'):
                 thumbup_user = div_selector.xpath('a/text()').extract_first()
                 thumbup_time = re.split('来自', div_selector.xpath('span[@class="ct"]/text()').extract_first())[0].strip()
+                thumbup_time = str(self.handle_time(self.get_time(response.headers['date']), thumbup_time))
 
                 thumbup_item['thumbup_list'].append(json.dumps({
                     'thumbup_user': thumbup_user,
