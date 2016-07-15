@@ -25,6 +25,7 @@
 -   Python 3.5+
     
     `sudo apt-get install python3-dev`
+    
     `sudo apt-get install python3-pip`
 -   PostgreSQL
     
@@ -32,9 +33,13 @@
 -   Python下的 scrapy包，requests包，rsa包，PostgreSQL 在python3 下的驱动 psycopg2
     
     `sudo python3 -m pip install requests`
+    
     `sudo python3 -m pip install rsa`
+    
     `sudo apt-get install libxml2-dev libxslt1-dev libffi-dev`
+    
     `sudo python3 -m pip install scrapy`
+    
     `sudo python3 -m pip install psycopg2`
 
 ---
