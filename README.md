@@ -23,11 +23,14 @@
 在 Linux, Mac OSX 下测试通过（Windows 没有测试，应该是可以的）。下面以 Ubuntu 为例搭建环境。
 
 -   Python 3.5+
+    
     `sudo apt-get install python3-dev`
     `sudo apt-get install python3-pip`
 -   PostgreSQL
+    
     `sudo apt-get install postgresql`
 -   Python下的 scrapy包，requests包，rsa包，PostgreSQL 在python3 下的驱动 psycopg2
+    
     `sudo python3 -m pip install requests`
     `sudo python3 -m pip install rsa`
     `sudo apt-get install libxml2-dev libxslt1-dev libffi-dev`
@@ -39,9 +42,11 @@
 ## 3 安装及运行
 
 下载到本地：
+
 `git clone https://github.com/cuckootan/WeiboSpider.git`
 
 然后进入项目根目录，执行如下命令即可运行（前提是要对该项目配置完成，见下面）：
+
 `scrapy crawl weibo`
 
 ---
