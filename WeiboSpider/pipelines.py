@@ -12,11 +12,11 @@ from .items import UserInfoItem, FollowItem, FanItem, \
 
 
 
-# TODO 添加建立表的功能。
 class WeibospiderPipeline(object):
-    def __init__(self, username, database):
+    def __init__(self, username, database, table_name_dict):
         self.username = username
         self.database = database
+        self.table_name_dict = table_name_dict
 
         self.user_info_item_count = 1
         self.follow_item_count = 1
@@ -35,10 +35,12 @@ class WeibospiderPipeline(object):
     def from_crawler(cls, crawler):
         return cls(
             username = crawler.settings.get('POSTGRESQL_USERNAME'),
-            database = crawler.settings.get('POSTGRESQL_DATABASE')
+            database = crawler.settings.get('POSTGRESQL_DATABASE'),
+            table_name_dict = crawler.settings.get('TABLE_NAME_DICT')
         )
 
     def open_spider(self, spider):
+        # 连接到数据库。
         try:
             self.connector = psycopg2.connect(
                 user = self.username,
@@ -52,6 +54,46 @@ class WeibospiderPipeline(object):
                   % errorcodes.lookup(e.pgcode)
             )
             exit(-1)
+
+        # 如果表不存在，则首先建表。
+        self.cursor.execute(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), user_name text, gender varchar(5), district text);'.format(
+                self.table_name_dict['user_info']
+            )
+        )
+        self.cursor.execute(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), follow_list text[]);'.format(self.table_name_dict['follow'])
+        )
+        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), fan_list text[]);'.format(
+            self.table_name_dict['fan']
+            )
+        )
+        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), publist_time text);'.format(
+            self.table_name_dict['post_info']
+            )
+        )
+        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), text text);'.format(
+            self.table_name_dict['text']
+            )
+        )
+        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), image_list text[]);'.format(
+            self.table_name_dict['image']
+            )
+        )
+        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), comment_list json[]);'.format(
+            self.table_name_dict['comment']
+            )
+        )
+        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), forward_list json[]);'.format(
+            self.table_name_dict['forward']
+            )
+        )
+        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), thumbup_list json[]);'.format(
+            self.table_name_dict['thumbup']
+            )
+        )
+        self.connector.commit()
+        self.logger.info('Table check finished!')
 
     def close_spider(self, spider):
         self.cursor.close()

@@ -52,6 +52,7 @@ DEFAULT_REQUEST_HEADERS = {
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
+# Use my own cookie middleware.
 DOWNLOADER_MIDDLEWARES = {
     'WeiboSpider.middlewares.CookiesMiddleware': 401
 }
@@ -64,11 +65,13 @@ DOWNLOADER_MIDDLEWARES = {
 
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
+# Use my own item pipline.
 ITEM_PIPELINES = {
     'WeiboSpider.pipelines.WeibospiderPipeline': 300,
 }
 
 LOG_LEVEL = 'INFO'
+# Default queue is LIFO, here uses FIFO.
 DEPTH_PRIORITY = 1
 SCHEDULER_DISK_QUEUE = 'scrapy.squeues.PickleFifoDiskQueue'
 SCHEDULER_MEMORY_QUEUE = 'scrapy.squeues.FifoMemoryQueue'
@@ -95,14 +98,26 @@ SCHEDULER_MEMORY_QUEUE = 'scrapy.squeues.FifoMemoryQueue'
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 # Your weibo username.
-WEIBO_USERNAME = 'joeyt.firefly@outlook.com'
+WEIBO_USERNAME = 'your username'
 # Your weibo password.
-WEIBO_PASSWORD = 'mpn6839_PIG'
+WEIBO_PASSWORD = 'your password'
+# Each name of tables can be defined here (each value of items).
+TABLE_NAME_DICT = {
+    'user_info': 'user_info_table_name',
+    'follow': 'follow_table_name',
+    'fan': 'fan_table_name',
+    'post_info': 'post_info_table_name',
+    'text': 'text_table_name',
+    'image': 'image_table_name',
+    'comment': 'comment_table_name',
+    'forward': 'forward_table_name',
+    'thumbup': 'thumbup_table_name'
+}
 
-# Your postgresql username.
-POSTGRESQL_USERNAME = 'cuckootan'
+# Your postgresql username (that must be connected without password).
+POSTGRESQL_USERNAME = 'your postgresql username'
 # Your postgresql databaes.
-POSTGRESQL_DATABASE = 'weibo'
+POSTGRESQL_DATABASE = 'your database name'
 
 # The user id you want to crawl.
-CRAWLED_WEIBO_ID_LIST = ['1197161814', '2636180571']
+CRAWLED_WEIBO_ID_LIST = ['123456789', '246812345']
