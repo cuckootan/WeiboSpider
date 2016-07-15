@@ -23,23 +23,23 @@
 在 Linux, Mac OSX 下测试通过（Windows 没有测试，应该是可以的）。下面以 Ubuntu 为例搭建环境。
 
 -   Python 3.5+
-    
+
     `sudo apt-get install python3-dev`
-    
+
     `sudo apt-get install python3-pip`
 -   PostgreSQL
-    
+
     `sudo apt-get install postgresql`
 -   Python下的 scrapy包，requests包，rsa包，PostgreSQL 在python3 下的驱动 psycopg2
-    
+
     `sudo python3 -m pip install requests`
-    
+
     `sudo python3 -m pip install rsa`
-    
+
     `sudo apt-get install libxml2-dev libxslt1-dev libffi-dev`
-    
+
     `sudo python3 -m pip install scrapy`
-    
+
     `sudo python3 -m pip install psycopg2`
 
 ---
@@ -89,4 +89,16 @@
         # The user id you want to crawl.
         CRAWLED_WEIBO_ID_LIST = ['123456789', '246812345']
     ```
+    其中，各个表的所有列的字段及数据类型分别为：
+    
+    -   user_info. (user_id varchar(20), user_name text, gender varchar(5), district text)
+    -   follow. (user_id varchar(20), follow_list text[])
+    -   fan. (user_id varchar(20), fan_list text[])
+    -   post_info. (user_id varchar(20), post_id varchar(20), publist_time text)
+    -   text. (user_id varchar(20), post_id varchar(20), text text)
+    -   image. (user_id varchar(20), post_id varchar(20), image_list text[])
+    -   comment. (user_id varchar(20), post_id varchar(20), comment_list json[])
+    -   forward. (user_id varchar(20), post_id varchar(20), forward_list json[])
+    -   thumbup. (user_id varchar(20), post_id varchar(20), thumbup_list json[])
+
     还有一些其他配置项，详见 settings.py。
