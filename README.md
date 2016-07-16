@@ -32,17 +32,17 @@
     `sudo apt-get install postgresql`
 -   Python下的 scrapy包，requests包，rsa包，PostgreSQL 在python3 下的驱动 psycopg2
 
-    `sudo python3 -m pip install requests`
+    `sudo python3 -m pip install --upgrade requests`
 
-    `sudo python3 -m pip install rsa`
+    `sudo python3 -m pip install --upgrade rsa`
 
     `sudo apt-get install libxml2-dev libxslt1-dev libffi-dev libssl-dev`
 
-    `sudo python3 -m pip install scrapy`
+    `sudo python3 -m pip install --upgrade scrapy`
     
     `sudo apt-get install libpq-dev`
 
-    `sudo python3 -m pip install psycopg2`
+    `sudo python3 -m pip install --upgrade psycopg2`
 
 ---
 
@@ -62,7 +62,7 @@
 
 -   选用 Pycharm 作为开发及调试工具；
 -   配置 PostgreSQL 并建立数据库。由于在本项目中使用的是无密码的 postgresql 用户及数据库，因此在本项目中一定要保证有这么一个用户。
--   程序中用到的所有配置都写在了项目中的 settings.py 里，因此将项目下载到本地后，只需配置更改其中的相应内容即可，无序修改其他源程序。
+-   程序中用到的所有配置都写在了项目中的 **settings.py** 里，因此将项目下载到本地后，只需配置更改其中的相应内容即可，无序修改其他源程序。
     主要包括：
 
     ```python
@@ -93,14 +93,23 @@
     ```
     其中，各个表的所有列的字段及数据类型分别为（它们不能被改变，表名可以改变）：
     
-    -   user_info. (user_id varchar(20), user_name text, gender varchar(5), district text)
-    -   follow. (user_id varchar(20), follow_list text[])
-    -   fan. (user_id varchar(20), fan_list text[])
-    -   post_info. (user_id varchar(20), post_id varchar(20), publist_time text)
-    -   text. (user_id varchar(20), post_id varchar(20), text text)
-    -   image. (user_id varchar(20), post_id varchar(20), image_list text[])
-    -   comment. (user_id varchar(20), post_id varchar(20), comment_list json)
-    -   forward. (user_id varchar(20), post_id varchar(20), forward_list json)
-    -   thumbup. (user_id varchar(20), post_id varchar(20), thumbup_list json)
+    -   user_info. **(user_id varchar(20), user_name text, gender varchar(5), district text)**
+    -   follow. **(user_id varchar(20), follow_list text[])**
+    -   fan. **(user_id varchar(20), fan_list text[])**
+    -   post_info. **(user_id varchar(20), post_id varchar(20), publist_time text)**
+    -   text. **(user_id varchar(20), post_id varchar(20), text text)**
+    -   image. **(user_id varchar(20), post_id varchar(20), image_list text[])**
+    -   comment. **(user_id varchar(20), post_id varchar(20), comment_list json)**
+    -   forward. **(user_id varchar(20), post_id varchar(20), forward_list json)**
+    -   thumbup. **(user_id varchar(20), post_id varchar(20), thumbup_list json)**
 
     还有一些其他配置项，详见 settings.py。
+
+## 5 数据的导出
+
+进入 **setting.py** 中指定的数据库，对每个表执行如下命令：
+
+`\copy table_name TO $ABSOLUTE_PATH`
+其中，**$ABSOLUTE_PATH** 为每个表对应输出文件的 **绝对路径**。
+
+对于表中 json 类型的字段，在输出到文件后用 python3 中的 json 包进行处理即可。
