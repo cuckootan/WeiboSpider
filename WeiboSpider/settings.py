@@ -56,8 +56,8 @@ DEFAULT_REQUEST_HEADERS = {
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 # Use my own cookie middleware.
 DOWNLOADER_MIDDLEWARES = {
-    'WeiboSpider.middlewares.CookiesMiddleware': 401
-    'WeiboSpider.middlewares.UserAgentMiddleware': 402
+    'WeiboSpider.middlewares.CookiesMiddleware': 401,
+    'WeiboSpider.middlewares.UserAgentsMiddleware': 402
 }
 
 # Enable or disable extensions
@@ -70,7 +70,7 @@ DOWNLOADER_MIDDLEWARES = {
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
 # Use my own item pipline.
 ITEM_PIPELINES = {
-    'WeiboSpider.pipelines.WeibospiderPipeline': 300,
+    'WeiboSpider.pipelines.WeibospiderPipeline': 300
 }
 
 LOG_LEVEL = 'INFO'
