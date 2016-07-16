@@ -5,7 +5,7 @@
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/en/latest/topics/item-pipeline.html
 
-import psycopg2, logging
+import sys, psycopg2, logging
 from psycopg2 import errorcodes
 from .items import UserInfoItem, FollowItem, FanItem, \
     PostInfoItem, TextItem, ImageItem, CommentItem, ForwardItem, ThumbupItem
@@ -49,11 +49,7 @@ class WeibospiderPipeline(object):
             self.cursor = self.connector.cursor()
             self.logger.info('Conneting to database successfully!')
         except psycopg2.Error as e:
-            self.logger.error(
-                'Failed to connect database. Returned: %s'
-                  % errorcodes.lookup(e.pgcode)
-            )
-            exit(-1)
+            sys.exit('Failed to connect database. Returned: {0:s}'.format(errorcodes.looup(e.pgcode)))
 
         # 如果表不存在，则首先建表。
         self.cursor.execute(
