@@ -83,7 +83,7 @@
 
     ```python
         # Your whole weibo username and password pairs.
-        WEIBO_LOGIN_INFO_LIST = [('your username_1', 'your password_1'), ('your username_2', 'your password_2')]
+        WEIBO_LOGIN_INFO_LIST = [('your username_1', 'your password_1'), ('your username_2', 'your password_2'), ...]
         # Each name of tables can be defined here (each value of items).
         TABLE_NAME_DICT = {
             'user_info': 'user_info_table_name',
@@ -104,8 +104,8 @@
         # Your postgresql databaes.
         POSTGRESQL_DATABASE = 'your database name'
 
-        # The user id you want to crawl.
-        CRAWLED_WEIBO_ID_LIST = ['123456789', '246812345']
+        # The IDs of users you want to crawl.
+        CRAWLED_WEIBO_ID_LIST = ['123456789', '246812345', ...]
     ```
     其中，各个表的所有列的字段及数据类型分别为（它们不能被改变，表名可以改变）：
     
