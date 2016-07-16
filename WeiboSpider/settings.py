@@ -16,20 +16,22 @@ NEWSPIDER_MODULE = 'WeiboSpider.spiders'
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:47.0) Gecko/20100101 Firefox/47.0'
+# USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:47.0) Gecko/20100101 Firefox/47.0'
 
 # Obey robots.txt rules
 #ROBOTSTXT_OBEY = True
 
+CONCURRENT_ITEMS = 100
+
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-#CONCURRENT_REQUESTS = 32
+CONCURRENT_REQUESTS = 10
 
 # Configure a delay for requests for the same website (default: 0)
 # See http://scrapy.readthedocs.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-DOWNLOAD_DELAY = 5
+DOWNLOAD_DELAY = 4
 # The download delay setting will honor only one of:
-#CONCURRENT_REQUESTS_PER_DOMAIN = 16
+CONCURRENT_REQUESTS_PER_DOMAIN = 10
 #CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
@@ -55,6 +57,7 @@ DEFAULT_REQUEST_HEADERS = {
 # Use my own cookie middleware.
 DOWNLOADER_MIDDLEWARES = {
     'WeiboSpider.middlewares.CookiesMiddleware': 401
+    'WeiboSpider.middlewares.UserAgentMiddleware': 402
 }
 
 # Enable or disable extensions
@@ -97,10 +100,8 @@ SCHEDULER_MEMORY_QUEUE = 'scrapy.squeues.FifoMemoryQueue'
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
-# Your weibo username.
-WEIBO_USERNAME = 'your username'
-# Your weibo password.
-WEIBO_PASSWORD = 'your password'
+# Your whole weibo username and password pairs.
+WEIBO_LOGIN_INFO_LIST = [('your username_1', 'your password_1'), ('your_username_2', 'your username_3'), ...]
 # Each name of tables can be defined here (each value of items).
 TABLE_NAME_DICT = {
     'user_info': 'user_info_table_name',
@@ -116,8 +117,10 @@ TABLE_NAME_DICT = {
 
 # Your postgresql username (that must be connected without password).
 POSTGRESQL_USERNAME = 'your postgresql username'
+# Your postgresql password.
+POSTGRESQL_PASSWORD = 'your postgresql password'
 # Your postgresql databaes.
 POSTGRESQL_DATABASE = 'your database name'
 
-# The user id you want to crawl.
-CRAWLED_WEIBO_ID_LIST = ['123456789', '246812345']
+# The IDs of users you want to crawl.
+CRAWLED_WEIBO_ID_LIST = ['123456789', '246812345', ...]

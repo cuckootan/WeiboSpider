@@ -56,20 +56,34 @@
 
 `scrapy crawl weibo`
 
+>   本项目中的 scrapy 项目名为 **weibo**。
+
 ---
 
 ## 4 配置说明
 
--   选用 Pycharm 作为开发及调试工具；
--   配置 PostgreSQL 并建立数据库。由于在本项目中使用的是无密码的 postgresql 用户及数据库，因此在本项目中一定要保证有这么一个用户。
--   程序中用到的所有配置都写在了项目中的 **settings.py** 里，因此将项目下载到本地后，只需配置更改其中的相应内容即可，无序修改其他源程序。
+1.  选用 Pycharm 作为开发及调试工具；
+    
+    打开 **Run -> Edit Configurations**，点击左上角的 **+** 添加配置信息。
+    
+    -   将 **Script** 字段填写为 **/usr/local/bin/scrapy**；
+    -   将 **Script parameters** 字段填写为 **crawl weibo**；
+    -   将 **Python interpreter** 字段填写为 python3 解释器的路径；
+    -   将 **Working directory** 字段填写为该项目的根目录的路径。比如：**/home/username/Project/WeiboSpider**；
+    -   取消 **Add content roots to PYTHONPATH** 以及 **Add source roots to PYTHONPATH**。
+2.   配置 PostgreSQL 并建立数据库。打开 **/etc/postgresql/9.5/main/pg_hba.conf**，添加如下字段到更改用户权限的相应位置。
+    
+    **local    all    your_username    trust**
+    
+    或者
+    
+    **local    all    your_username    md5**
+3.   程序中用到的所有配置都写在了项目中的 **settings.py** 里，因此将项目下载到本地后，只需配置更改其中的相应内容即可，无序修改其他源程序。
     主要包括：
 
     ```python
-        # Your weibo username.
-        WEIBO_USERNAME = 'your username'
-        # Your weibo password.
-        WEIBO_PASSWORD = 'your password'
+        # Your whole weibo username and password pairs.
+        WEIBO_LOGIN_INFO_LIST = [('your username_1', 'your password_1'), ('your username_2', 'your password_2')]
         # Each name of tables can be defined here (each value of items).
         TABLE_NAME_DICT = {
             'user_info': 'user_info_table_name',
@@ -83,8 +97,10 @@
             'thumbup': 'thumbup_table_name'
         }
 
-        # Your postgresql username (that must be connected without password).
+        # Your postgresql username.
         POSTGRESQL_USERNAME = 'your postgresql username'
+        # Your postgresql password.
+        POSTGRESQL_PASSWORD = 'your postgresql password'
         # Your postgresql databaes.
         POSTGRESQL_DATABASE = 'your database name'
 
@@ -93,15 +109,15 @@
     ```
     其中，各个表的所有列的字段及数据类型分别为（它们不能被改变，表名可以改变）：
     
-    -   user_info. **(user_id varchar(20), user_name text, gender varchar(5), district text)**
-    -   follow. **(user_id varchar(20), follow_list text[])**
-    -   fan. **(user_id varchar(20), fan_list text[])**
-    -   post_info. **(user_id varchar(20), post_id varchar(20), publist_time text)**
-    -   text. **(user_id varchar(20), post_id varchar(20), text text)**
-    -   image. **(user_id varchar(20), post_id varchar(20), image_list text[])**
-    -   comment. **(user_id varchar(20), post_id varchar(20), comment_list json)**
-    -   forward. **(user_id varchar(20), post_id varchar(20), forward_list json)**
-    -   thumbup. **(user_id varchar(20), post_id varchar(20), thumbup_list json)**
+    -   user_info 对应表的结构为： **(user_id varchar(20), user_name text, gender varchar(5), district text)**
+    -   follow 对应表的结构为： **(user_id varchar(20), follow_list text[])**
+    -   fan 对应表的结构为： **(user_id varchar(20), fan_list text[])**
+    -   post_info 对应表的结构为： **(user_id varchar(20), post_id varchar(20), publist_time text)**
+    -   text 对应表的结构为： **(user_id varchar(20), post_id varchar(20), text text)**
+    -   image 对应表的结构为： **(user_id varchar(20), post_id varchar(20), image_list text[])**
+    -   comment 对应表的结构为： **(user_id varchar(20), post_id varchar(20), comment_list json)**
+    -   forward 对应表的结构为： **(user_id varchar(20), post_id varchar(20), forward_list json)**
+    -   thumbup 对应表的结构为： **(user_id varchar(20), post_id varchar(20), thumbup_list json)**
 
     还有一些其他配置项，详见 settings.py。
 

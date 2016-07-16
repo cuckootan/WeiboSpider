@@ -13,8 +13,9 @@ from .items import UserInfoItem, FollowItem, FanItem, \
 
 
 class WeibospiderPipeline(object):
-    def __init__(self, username, database, table_name_dict):
+    def __init__(self, username, password, database, table_name_dict):
         self.username = username
+        self.password = password
         self.database = database
         self.table_name_dict = table_name_dict
 
@@ -35,6 +36,7 @@ class WeibospiderPipeline(object):
     def from_crawler(cls, crawler):
         return cls(
             username = crawler.settings.get('POSTGRESQL_USERNAME'),
+            password = crawler.settings.get('POSTGRESQL_PASSWORD'),
             database = crawler.settings.get('POSTGRESQL_DATABASE'),
             table_name_dict = crawler.settings.get('TABLE_NAME_DICT')
         )
@@ -44,6 +46,7 @@ class WeibospiderPipeline(object):
         try:
             self.connector = psycopg2.connect(
                 user = self.username,
+                password = self.password,
                 database = self.database
             )
             self.cursor = self.connector.cursor()
