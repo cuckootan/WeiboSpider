@@ -110,6 +110,7 @@
 进入 **setting.py** 中指定的数据库，对每个表执行如下命令：
 
 `\copy table_name TO $ABSOLUTE_PATH`
+
 其中，**$ABSOLUTE_PATH** 为每个表对应输出文件的 **绝对路径**。
 
 对于表中 json 类型的字段，在输出到文件后用 python3 中的 json 包进行处理即可。
