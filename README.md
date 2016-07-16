@@ -89,7 +89,7 @@
         # The user id you want to crawl.
         CRAWLED_WEIBO_ID_LIST = ['123456789', '246812345']
     ```
-    其中，各个表的所有列的字段及数据类型分别为：
+    其中，各个表的所有列的字段及数据类型分别为（它们不能被改变，表名可以改变）：
     
     -   user_info. (user_id varchar(20), user_name text, gender varchar(5), district text)
     -   follow. (user_id varchar(20), follow_list text[])
@@ -97,8 +97,8 @@
     -   post_info. (user_id varchar(20), post_id varchar(20), publist_time text)
     -   text. (user_id varchar(20), post_id varchar(20), text text)
     -   image. (user_id varchar(20), post_id varchar(20), image_list text[])
-    -   comment. (user_id varchar(20), post_id varchar(20), comment_list json[])
-    -   forward. (user_id varchar(20), post_id varchar(20), forward_list json[])
-    -   thumbup. (user_id varchar(20), post_id varchar(20), thumbup_list json[])
+    -   comment. (user_id varchar(20), post_id varchar(20), comment_list json)
+    -   forward. (user_id varchar(20), post_id varchar(20), forward_list json)
+    -   thumbup. (user_id varchar(20), post_id varchar(20), thumbup_list json)
 
     还有一些其他配置项，详见 settings.py。

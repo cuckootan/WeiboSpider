@@ -357,11 +357,11 @@ class WeiboSpider(CrawlSpider):
                 comment_time = div_selector.xpath('span[@class="ct"]/text()').extract_first()
                 comment_time = str(self.handle_time(self.get_time(response.headers['date']), comment_time))
 
-                comment_item['comment_list'].append(json.dumps({
+                comment_item['comment_list'].append({
                     'comment_user': comment_user,
                     'comment_text': comment_text,
                     'comment_time': comment_time
-                }))
+                })
 
         # 如果后面还存在着其他评论，则生成下一页评论的 Request 对象。
         if response.xpath('//div[@class="pa" and @id="pagelist"]') \
@@ -381,6 +381,7 @@ class WeiboSpider(CrawlSpider):
                 comment_item['post_id'],
                 len(comment_item['comment_list'])
             ))
+            comment_item['comment_list'] = json.dumps(comment_item['comment_list'])
             yield comment_item
 
     # 递归地爬取某条微博的所有的转发，爬取结束后返回。
@@ -393,10 +394,10 @@ class WeiboSpider(CrawlSpider):
                 forward_time = re.split('来自', div_selector.xpath('span[@class="ct"]/text()').extract_first())[0].strip()
                 forward_time = str(self.handle_time(self.get_time(response.headers['date']), forward_time))
 
-                forward_item['forward_list'].append(json.dumps({
+                forward_item['forward_list'].append({
                     'forward_user': forward_user,
                     'forward_time': forward_time
-                }))
+                })
 
         # 如果后面还存在着其他转发，则生成下一页转发的 Request 对象。
         if response.xpath('//div[@class="pa" and @id="pagelist"]') \
@@ -416,6 +417,7 @@ class WeiboSpider(CrawlSpider):
                 forward_item['post_id'],
                 len(forward_item['forward_list'])
             ))
+            forward_item['forward_list'] = json.dumps(forward_item['forward_list'])
             yield forward_item
 
     # 爬取某条微博的所有点赞信息，爬取结束后返回。
@@ -428,10 +430,10 @@ class WeiboSpider(CrawlSpider):
                 thumbup_time = re.split('来自', div_selector.xpath('span[@class="ct"]/text()').extract_first())[0].strip()
                 thumbup_time = str(self.handle_time(self.get_time(response.headers['date']), thumbup_time))
 
-                thumbup_item['thumbup_list'].append(json.dumps({
+                thumbup_item['thumbup_list'].append({
                     'thumbup_user': thumbup_user,
                     'thumbup_time': thumbup_time
-                }))
+                })
 
         # 如果后面还存在着其他点赞，则生成下一页点赞的 Request 对象。
         if response.xpath('//div[@class="pa" and @id="pagelist"]') \
@@ -451,4 +453,5 @@ class WeiboSpider(CrawlSpider):
                 thumbup_item['post_id'],
                 len(thumbup_item['thumbup_list'])
             ))
+            thumbup_item['thumbup_list'] = json.dumps(thumbup_item['thumbup_list'])
             yield thumbup_item

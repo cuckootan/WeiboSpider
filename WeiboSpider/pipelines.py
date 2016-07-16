@@ -62,34 +62,43 @@ class WeibospiderPipeline(object):
             )
         )
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), follow_list text[]);'.format(self.table_name_dict['follow'])
-        )
-        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), fan_list text[]);'.format(
-            self.table_name_dict['fan']
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), follow_list text[]);'.format(
+                self.table_name_dict['follow']
             )
         )
-        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), publist_time text);'.format(
-            self.table_name_dict['post_info']
+        self.cursor.execute(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), fan_list text[]);'.format(
+                self.table_name_dict['fan']
             )
         )
-        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), text text);'.format(
-            self.table_name_dict['text']
+        self.cursor.execute(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), publish_time text);'.format(
+                self.table_name_dict['post_info']
             )
         )
-        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), image_list text[]);'.format(
-            self.table_name_dict['image']
+        self.cursor.execute(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), text text);'.format(
+                self.table_name_dict['text']
             )
         )
-        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), comment_list json[]);'.format(
-            self.table_name_dict['comment']
+        self.cursor.execute(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), image_list text[]);'.format(
+                self.table_name_dict['image']
             )
         )
-        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), forward_list json[]);'.format(
-            self.table_name_dict['forward']
+        self.cursor.execute(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), comment_list json);'.format(
+                self.table_name_dict['comment']
             )
         )
-        self.cursor.execute('CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), thumbup_list json[]);'.format(
-            self.table_name_dict['thumbup']
+        self.cursor.execute(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), forward_list json);'.format(
+                self.table_name_dict['forward']
+            )
+        )
+        self.cursor.execute(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), thumbup_list json);'.format(
+                self.table_name_dict['thumbup']
             )
         )
         self.connector.commit()
@@ -102,171 +111,236 @@ class WeibospiderPipeline(object):
     def process_item(self, item, spider):
         if isinstance(item, UserInfoItem):
             try:
+                statement = (
+                    'INSERT INTO {0:s} (user_id, user_name, gender, district)'
+                    'VALUES (%(user_id)s, %(user_name)s, %(gender)s, %(district)s);'
+                ).format(self.table_name_dict['user_info'])
                 self.cursor.execute(
-                    '''INSERT INTO user_info (user_id, user_name, gender, district)
-                        VALUES (%(user_id)s, %(user_name)s, %(gender)s, %(district)s);''',
+                    statement,
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write a user_info item (user_id: {0:s}) into database. Seq: {1:d}'.format(
-                    item['user_id'],
-                    self.user_info_item_count
-                ))
+                self.logger.info(
+                    'Write a user_info item (user_id: {0:s}) into database. Seq: {1:d}'.format(
+                        item['user_id'],
+                        self.user_info_item_count
+                    )
+                )
                 self.user_info_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
-                    "Failed to insert data into user_info table. Returned: %s"
-                      % errorcodes.lookup(e.pgcode)
+                    'Failed to insert data into table {0:s}. Returned: {1:s}'.format(
+                        self.table_name_dict['user_info'],
+                        errorcodes.lookup(e.pgcode)
+                    )
                 )
         elif isinstance(item, FollowItem):
             try:
+                statement = (
+                    'INSERT INTO {0:s} (user_id, follow_list)'
+                    'VALUES (%(user_id)s, %(follow_list)s);'
+                ).format(self.table_name_dict['follow'])
                 self.cursor.execute(
-                    '''INSERT INTO follow (user_id, follow_list)
-                        VALUES (%(user_id)s, %(follow_list)s);''',
+                    statement,
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write a follow item (user_id: {0:s}) into database. Seq: {1:d}'.format(
-                    item['user_id'],
-                    self.follow_item_count
-                ))
+                self.logger.info(
+                    'Write a follow item (user_id: {0:s}) into database. Seq: {1:d}'.format(
+                        item['user_id'],
+                        self.follow_item_count
+                    )
+                )
                 self.follow_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
-                    "Failed to insert data into follow table. Returned: %s"
-                      % (errorcodes.lookup(e.pgcode))
+                    'Failed to insert data into table {0:s}. Returned: {1:s}'.format(
+                        self.table_name_dict['follow'],
+                        errorcodes.lookup(e.pgcode)
+                    )
                 )
         elif isinstance(item, FanItem):
             try:
+                statement = (
+                    'INSERT INTO {0:s} (user_id, fan_list)'
+                    'VALUES (%(user_id)s, %(fan_list)s);'
+                ).format(self.table_name_dict['fan'])
                 self.cursor.execute(
-                    '''INSERT INTO fan (user_id, fan_list)
-                        VALUES (%(user_id)s, %(fan_list)s);''',
+                    statement,
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write a fan item (user_id: {0:s}) into database. Seq: {1:d}'.format(
-                    item['user_id'],
-                    self.fan_item_count
-                ))
+                self.logger.info(
+                    'Write a fan item (user_id: {0:s}) into database. Seq: {1:d}'.format(
+                        item['user_id'],
+                        self.fan_item_count
+                    )
+                )
                 self.fan_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
-                    "Failed to insert data into fan table. Returned: %s"
-                      % (errorcodes.lookup(e.pgcode))
+                    'Failed to insert data into table {0:s}. Returned: {1:s}'.format(
+                        self.table_name_dict['fan'],
+                        errorcodes.lookup(e.pgcode)
+                    )
                 )
         elif isinstance(item, PostInfoItem):
             try:
+                statement = (
+                    'INSERT INTO {0:s} (user_id, post_id, publish_time)'
+                    'VALUES (%(user_id)s, %(post_id)s, %(publish_time)s);'
+                ).format(self.table_name_dict['post_info'])
                 self.cursor.execute(
-                    '''INSERT INTO post_info (user_id, post_id, publish_time)
-                        VALUES (%(user_id)s, %(post_id)s, %(publish_time)s);''',
+                    statement,
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write a post_info item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
-                    item['user_id'],
-                    item['post_id'],
-                    self.post_info_item_count
-                ))
+                self.logger.info(
+                    'Write a post_info item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                        item['user_id'],
+                        item['post_id'],
+                        self.post_info_item_count
+                    )
+                )
                 self.post_info_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
-                    "Failed to insert data into follow table. Returned: %s"
-                      % (errorcodes.lookup(e.pgcode))
+                    'Failed to insert data into table {0:s}. Returned: {1:s}'.format(
+                        self.table_name_dict['post_info'],
+                        errorcodes.lookup(e.pgcode)
+                    )
                 )
         elif isinstance(item, TextItem):
             try:
+                statement = (
+                    'INSERT INTO {0:s} (user_id, post_id, text)'
+                    'VALUES (%(user_id)s, %(post_id)s, %(text)s);'
+                ).format(self.table_name_dict['text'])
                 self.cursor.execute(
-                    '''INSERT INTO text (user_id, post_id, text)
-                        VALUES (%(user_id)s, %(post_id)s, %(text)s);''',
+                    statement,
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write a text item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
-                    item['user_id'],
-                    item['post_id'],
-                    self.text_item_count
-                ))
+                self.logger.info(
+                    'Write a text item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                        item['user_id'],
+                        item['post_id'],
+                        self.text_item_count
+                    )
+                )
                 self.text_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
-                    "Failed to insert data into text table. Returned: %s"
-                      % (errorcodes.lookup(e.pgcode))
+                    'Failed to insert data into table {0:s}. Returned: {1:s}'.format(
+                        self.table_name_dict['text'],
+                        errorcodes.lookup(e.pgcode)
+                    )
                 )
         elif isinstance(item, ImageItem):
             try:
+                statement = (
+                    'INSERT INTO {0:s} (user_id, post_id, image_list)'
+                    'VALUES (%(user_id)s, %(post_id)s, %(image_list)s);'
+                ).format(self.table_name_dict['image'])
                 self.cursor.execute(
-                    '''INSERT INTO image (user_id, post_id, image_list)
-                        VALUES (%(user_id)s, %(post_id)s, %(image_list)s);''',
+                    statement,
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write an image item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
-                    item['user_id'],
-                    item['post_id'],
-                    self.image_item_count
-                ))
+                self.logger.info(
+                    'Write an image item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                        item['user_id'],
+                        item['post_id'],
+                        self.image_item_count
+                    )
+                )
                 self.image_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
-                    "Failed to insert data into image table. Returned: %s"
-                      % (errorcodes.lookup(e.pgcode))
+                    'Failed to insert data into table {0:s}. Returned: {1:s}'.format(
+                        self.table_name_dict['image'],
+                        errorcodes.lookup(e.pgcode)
+                    )
                 )
         elif isinstance(item, CommentItem):
             try:
+                statement = (
+                    'INSERT INTO {0:s} (user_id, post_id, comment_list)'
+                    'VALUES (%(user_id)s, %(post_id)s, %(comment_list)s);'
+                ).format(
+                    self.table_name_dict['comment']
+                )
                 self.cursor.execute(
-                    '''INSERT INTO comment (user_id, post_id, comment_list)
-                        VALUES (%(user_id)s, %(post_id)s, %(comment_list)s::json[]);''',
+                    statement,
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write a comment item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
-                    item['user_id'],
-                    item['post_id'],
-                    self.comment_item_count
-                ))
+                self.logger.info(
+                    'Write a comment item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                        item['user_id'],
+                        item['post_id'],
+                        self.comment_item_count
+                    )
+                )
                 self.comment_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
-                    "Failed to insert data into comment table. Returned: %s"
-                    % (errorcodes.lookup(e.pgcode))
+                    'Failed to insert data into table {0:s}. Returned: {1:s}'.format(
+                        self.table_name_dict['comment'],
+                        errorcodes.lookup(e.pgcode)
+                    )
                 )
         elif isinstance(item, ForwardItem):
             try:
+                statement = (
+                    'INSERT INTO {0:s} (user_id, post_id, forward_list) '
+                    'VALUES (%(user_id)s, %(post_id)s, %(forward_list)s);'
+                ).format(self.table_name_dict['forward'])
                 self.cursor.execute(
-                    '''INSERT INTO forward (user_id, post_id, forward_list)
-                        VALUES (%(user_id)s, %(post_id)s, %(forward_list)s::json[]);''',
+                    statement,
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write a forward item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
-                    item['user_id'],
-                    item['post_id'],
-                    self.forward_item_count
-                ))
+                self.logger.info(
+                    'Write a forward item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                        item['user_id'],
+                        item['post_id'],
+                        self.forward_item_count
+                    )
+                )
                 self.forward_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
-                    "Failed to insert data into forward table. Returned: %s"
-                    % (errorcodes.lookup(e.pgcode))
+                    'Failed to insert data into table {0:s}. Returned: {1:s}'.format(
+                        self.table_name_dict['forward'],
+                        errorcodes.lookup(e.pgcode)
+                    )
                 )
         elif isinstance(item, ThumbupItem):
             try:
+                statement = (
+                    'INSERT INTO {0:s} (user_id, post_id, thumbup_list) '
+                    'VALUES (%(user_id)s, %(post_id)s, %(thumbup_list)s);'
+                ).format(self.table_name_dict['thumbup'])
                 self.cursor.execute(
-                    '''INSERT INTO thumbup (user_id, post_id, thumbup_list)
-                        VALUES (%(user_id)s, %(post_id)s, %(thumbup_list)s::json[]);''',
+                    statement,
                     dict(item)
                 )
                 self.connector.commit()
-                self.logger.info('Write a thumb-up item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
-                    item['user_id'],
-                    item['post_id'],
-                    self.thumbup_item_count
-                ))
+                self.logger.info(
+                        'Write a thumb-up item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                            item['user_id'],
+                            item['post_id'],
+                            self.thumbup_item_count
+                        )
+                )
                 self.thumbup_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
-                    "Failed to insert data into thumbup table. Returned: %s"
-                    % (errorcodes.lookup(e.pgcode))
+                    'Failed to insert data into table {0:s}. Returned: {1:s}'.format(
+                        self.table_name_dict['thumbup'],
+                        errorcodes.lookup(e.pgcode)
+                    )
                 )
 
         return item
