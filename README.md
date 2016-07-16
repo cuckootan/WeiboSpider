@@ -36,9 +36,11 @@
 
     `sudo python3 -m pip install rsa`
 
-    `sudo apt-get install libxml2-dev libxslt1-dev libffi-dev`
+    `sudo apt-get install libxml2-dev libxslt1-dev libffi-dev libssl-dev`
 
     `sudo python3 -m pip install scrapy`
+    
+    `sudo apt-get install libpq-dev`
 
     `sudo python3 -m pip install psycopg2`
 
