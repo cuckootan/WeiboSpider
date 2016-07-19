@@ -37,19 +37,19 @@
 -   PostgreSQL
 
     `sudo apt-get install postgresql`
--   Python下的 scrapy包，requests包，rsa包，PostgreSQL 在python3 下的驱动 psycopg2
+-   Python下的 scrapy包，requests包，rsa包，PostgreSQL 在 Python3 下的驱动 psycopg2
 
-    `sudo python3 -m pip install --upgrade requests`
+    `sudo python3 -m pip install -U requests`
 
-    `sudo python3 -m pip install --upgrade rsa`
+    `sudo python3 -m pip install -U rsa`
 
     `sudo apt-get install libxml2-dev libxslt1-dev libffi-dev libssl-dev`
 
-    `sudo python3 -m pip install --upgrade scrapy`
+    `sudo python3 -m pip install -U scrapy`
     
     `sudo apt-get install libpq-dev`
 
-    `sudo python3 -m pip install --upgrade psycopg2`
+    `sudo python3 -m pip install -U psycopg2`
 
 ---
 
@@ -85,7 +85,7 @@
     或者
     
     **local    all    your_username    md5**
-3.   程序中用到的所有配置都写在了项目中的 **settings.py** 里，因此将项目下载到本地后，只需配置更改其中的相应内容即可，无序修改其他源程序。
+3.  程序中用到的所有配置都写在了项目中的 **settings.py** 里，因此将项目下载到本地后，只需配置更改其中的相应内容即可，无序修改其他源程序。
     主要包括：
 
     ```python
@@ -140,5 +140,5 @@
 
 ## TODO
 
--   添加用于实时查看爬虫信息的图形化界面（用 Graphite）；
+-   添加用于实时查看爬虫信息的图形化界面（用 Graphite 实现）；
 -   添加代理，减小被 ban 的几率。
