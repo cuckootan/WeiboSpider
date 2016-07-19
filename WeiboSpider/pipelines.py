@@ -19,10 +19,12 @@ class WeibospiderPipeline(object):
         self.password = settings.get('POSTGRESQL_PASSWORD')
         self.database = settings.get('POSTGRESQL_DATABASE')
         self.table_name_dict = settings.get('TABLE_NAME_DICT')
-
-        self.emailer = EmailSender()
-        self.emailer.from_settings(settings)
-        self.to_addr = settings.get('TO_ADDR')
+       
+        self.mail_enabled = settings.get('MAIL_ENABLED')
+        if self.mail_enabled == True:
+            self.emailer = EmailSender()
+            self.emailer.from_settings(settings)
+            self.to_addr = settings.get('TO_ADDR')
 
         self.user_info_item_count = 1
         self.follow_item_count = 1
@@ -108,18 +110,19 @@ class WeibospiderPipeline(object):
     def close_spider(self, spider):
         self.cursor.close()
         self.connector.close()
-
-        self.emailer.send(
-            to_addr = self.to_addr,
-            subject = '爬虫结束',
-            body = '共抓取 {0:d} 条微博，{1:d} 条评论，{2:d} 条转发，{3:d} 条点赞'.format(
-                self.post_info_item_count,
-                self.comment_item_count,
-                self.forward_item_count,
-                self.thumbup_item_count
-            ),
-            charset = 'utf-8'
-        )
+        
+        if self.mail_enabled == True:
+            self.emailer.send(
+                to_addr = self.to_addr,
+                subject = '爬虫结束',
+                body = '共抓取 {0:d} 条微博，{1:d} 条评论，{2:d} 条转发，{3:d} 条点赞'.format(
+                    self.post_info_item_count,
+                    self.comment_item_count,
+                    self.forward_item_count,
+                    self.thumbup_item_count
+                ),
+                charset = 'utf-8'
+            )
 
     def process_item(self, item, spider):
         if isinstance(item, UserInfoItem):

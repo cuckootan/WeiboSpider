@@ -29,9 +29,9 @@ CONCURRENT_REQUESTS = 16
 # Configure a delay for requests for the same website (default: 0)
 # See http://scrapy.readthedocs.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-DOWNLOAD_DELAY = 2
+DOWNLOAD_DELAY = 1
 # The download delay setting will honor only one of:
-CONCURRENT_REQUESTS_PER_DOMAIN = 10
+CONCURRENT_REQUESTS_PER_DOMAIN = 16
 #CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
@@ -101,7 +101,7 @@ AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
 # Your whole weibo username and password pairs.
-WEIBO_LOGIN_INFO_LIST = [('your username_1', 'your password_1'), ('your_username_2', 'your password_3'), ...]
+WEIBO_LOGIN_INFO_LIST = [('your username_1', 'your password_1'), ('your username_2', 'your password_2'), ...]
 # Each name of tables can be defined here (each value of items).
 TABLE_NAME_DICT = {
     'user_info': 'user_info_table_name',
@@ -120,11 +120,13 @@ POSTGRESQL_USERNAME = 'your postgresql username'
 # Your postgresql password.
 POSTGRESQL_PASSWORD = 'your postgresql password'
 # Your postgresql databaes.
-POSTGRESQL_DATABASE = 'your database name'
+POSTGRESQL_DATABASE = 'your postgresql database'
 
 # The IDs of users you want to crawl.
-CRAWLED_WEIBO_ID_LIST = ['123456789', '246812345', ...]
+CRAWLED_WEIBO_ID_LIST = ['id_1', 'id_2', ...]
 
+# Email notification.
+MAIL_ENABLED = False
 MAIL_FROM = 'your email'
 MAIL_HOST = 'your email smtp server host'
 # Your email smtp server port
