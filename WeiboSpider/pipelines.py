@@ -21,7 +21,7 @@ class WeibospiderPipeline(object):
         self.table_name_dict = settings.get('TABLE_NAME_DICT')
        
         self.mail_enabled = settings.get('MAIL_ENABLED')
-        if self.mail_enabled == True:
+        if self.mail_enabled:
             self.emailer = EmailSender()
             self.emailer.from_settings(settings)
             self.to_addr = settings.get('TO_ADDR')
@@ -56,7 +56,7 @@ class WeibospiderPipeline(object):
             self.cursor = self.connector.cursor()
             self.logger.info('Conneting to database successfully!')
         except psycopg2.Error as e:
-            sys.exit('Failed to connect database. Returned: {0:s}'.format(errorcodes.looup(e.pgcode)))
+            sys.exit('Failed to connect database. Returned: {0:s}'.format(errorcodes.lookup(e.pgcode)))
 
         # 如果表不存在，则首先建表。
         self.cursor.execute(
@@ -111,7 +111,7 @@ class WeibospiderPipeline(object):
         self.cursor.close()
         self.connector.close()
         
-        if self.mail_enabled == True:
+        if self.mail_enabled:
             self.emailer.send(
                 to_addr = self.to_addr,
                 subject = '爬虫结束',

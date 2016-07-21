@@ -91,7 +91,7 @@
     ```python
         # Your whole weibo username and password pairs.
         WEIBO_LOGIN_INFO_LIST = [('your username_1', 'your password_1'), ('your username_2', 'your password_2'), ...]
-        # Each name of tables can be defined here (each value of items).
+        # Each name of tables can be defined here (each value of items). These keys are not changeable.
         TABLE_NAME_DICT = {
             'user_info': 'user_info_table_name',
             'follow': 'follow_table_name',

@@ -74,6 +74,7 @@ ITEM_PIPELINES = {
 }
 
 LOG_LEVEL = 'INFO'
+
 # Default queue is LIFO, here uses FIFO.
 DEPTH_PRIORITY = 1
 SCHEDULER_DISK_QUEUE = 'scrapy.squeues.PickleFifoDiskQueue'
@@ -83,9 +84,9 @@ SCHEDULER_MEMORY_QUEUE = 'scrapy.squeues.FifoMemoryQueue'
 # See http://doc.scrapy.org/en/latest/topics/autothrottle.html
 AUTOTHROTTLE_ENABLED = True
 # The initial download delay
-AUTOTHROTTLE_START_DELAY = 5
+AUTOTHROTTLE_START_DELAY = 2
 # The maximum download delay to be set in case of high latencies
-AUTOTHROTTLE_MAX_DELAY = 60
+AUTOTHROTTLE_MAX_DELAY = 10
 # The average number of requests Scrapy should be sending in parallel to
 # each remote server
 AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
@@ -102,7 +103,7 @@ AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
 
 # Your whole weibo username and password pairs.
 WEIBO_LOGIN_INFO_LIST = [('your username_1', 'your password_1'), ('your username_2', 'your password_2'), ...]
-# Each name of tables can be defined here (each value of items).
+# Each name of tables can be defined here (each value of items). These keys are not changeable.
 TABLE_NAME_DICT = {
     'user_info': 'user_info_table_name',
     'follow': 'follow_table_name',
@@ -115,7 +116,7 @@ TABLE_NAME_DICT = {
     'thumbup': 'thumbup_table_name'
 }
 
-# Your postgresql username (that must be connected without password).
+# Your postgresql username.
 POSTGRESQL_USERNAME = 'your postgresql username'
 # Your postgresql password.
 POSTGRESQL_PASSWORD = 'your postgresql password'
