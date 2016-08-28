@@ -26,6 +26,45 @@ class WeiboSpider(CrawlSpider):
                 callback = self.parse_user_info
             )
 
+            # follow_item 的结构为：{'user_id': xxx, 'follow_list': [1th_follow, 2th_follow, ...]}。
+            follow_item = FollowItem(
+                user_id = None,
+                follow_list = None
+            )
+            follow_item['user_id'] = user_id
+            follow_item['follow_list'] = []
+            # fan_item 的结构为：{'user_id': xxx, 'fan_list': [1th_fan, 2th_fan, ...]}。
+            fan_item = FanItem(
+                user_id = None,
+                fan_list = None
+            )
+            fan_item['user_id'] = user_id
+            fan_item['fan_list'] = []
+
+            follow_start_url = 'http://weibo.cn/' + user_id + '/follow?page=1'
+            # 生成关注的 Request 对象，用以爬取当前用户关注的人。
+            yield scrapy.Request(
+                url = follow_start_url,
+                meta = {'item': follow_item},
+                callback = self.parse_follow
+            )
+
+            fan_start_url = 'http://weibo.cn/' + user_id + '/fans?page=1'
+            # 生成粉丝的 Request 对象，用以爬取当前用户的粉丝。
+            yield scrapy.Request(
+                url = fan_start_url,
+                meta = {'item': fan_item},
+                callback = self.parse_fan
+            )
+
+            post_info_start_url = 'http://weibo.cn/' + user_id + '/profile?page=1'
+            # 生成首条微博的基本信息的 Request 对象，用以爬取当前用户的首条微博及其之后的所有微博的基本信息。
+            yield scrapy.Request(
+                url = post_info_start_url,
+                meta = {'user_id': user_id},
+                callback = self.parse_post_info
+            )
+
     # 爬取当前用户的个人信息并返回，并且生成关注，粉丝，微博基本信息的 Requst对象。
     def parse_user_info(self, response):
         # user_info_item 的结构为：{'user_id': xxx, 'user_name': xxx, 'gender': xxx, 'district': xxx}。
@@ -48,45 +87,6 @@ class WeiboSpider(CrawlSpider):
 
         # 爬取当前用户的个人信息结束，返回。
         yield user_info_item
-
-        # follow_item 的结构为：{'user_id': xxx, 'follow_list': [1th_follow, 2th_follow, ...]}。
-        follow_item = FollowItem(
-            user_id = None,
-            follow_list = None
-        )
-        follow_item['user_id'] = user_info_item['user_id']
-        follow_item['follow_list'] = []
-        # fan_item 的结构为：{'user_id': xxx, 'fan_list': [1th_fan, 2th_fan, ...]}。
-        fan_item = FanItem(
-            user_id = None,
-            fan_list = None
-        )
-        fan_item['user_id'] = user_info_item['user_id']
-        fan_item['fan_list'] = []
-
-        follow_start_url = 'http://weibo.cn/' + user_info_item['user_id'] + '/follow?page=1'
-        # 生成关注的 Request 对象，用以爬取当前用户关注的人。
-        yield scrapy.Request(
-            url = follow_start_url,
-            meta = {'item': follow_item},
-            callback = self.parse_follow
-        )
-
-        fan_start_url = 'http://weibo.cn/' + user_info_item['user_id'] + '/fans?page=1'
-        # 生成粉丝的 Request 对象，用以爬取当前用户的粉丝。
-        yield scrapy.Request(
-            url = fan_start_url,
-            meta = {'item': fan_item},
-            callback = self.parse_fan
-        )
-
-        post_info_start_url = 'http://weibo.cn/' + user_info_item['user_id'] + '/profile?page=1'
-        # 生成微博基本信息的 Request 对象，用以爬取当前用户的所有微博的基本信息。
-        yield scrapy.Request(
-            url = post_info_start_url,
-            meta = {'user_id': user_info_item['user_id']},
-            callback = self.parse_post_info
-        )
 
     # 递归地爬取当前用户的所有关注的人，爬取结束后返回。
     def parse_follow(self, response):
@@ -278,9 +278,10 @@ class WeiboSpider(CrawlSpider):
                        + response.xpath('//div[@class="pa" and @id="pagelist"]/form/div/a[1]/@href').extract_first()
             yield scrapy.Request(
                 url = next_url,
-                meta = {'user_id': post_info_item['user_id']},
+                meta = {'user_id': response.meta['user_id']},
                 callback = self.parse_post_info
             )
+
     def get_time(self, post_time):
         return datetime.strptime(post_time.decode('utf-8'), '%a, %d %b %Y %H:%M:%S %Z')
 
@@ -298,13 +299,24 @@ class WeiboSpider(CrawlSpider):
             )
         else:
             temp_time = re.findall(r'\d+', post_time)
-            return datetime(
-                year = now_time.date().year,
-                month = int(temp_time[0]),
-                day = int(temp_time[1]),
-                hour = int(temp_time[2]),
-                minute = int(temp_time[3])
-            )
+            # x-x-x x:x
+            if int(temp_time[0]) > 12:
+                return datetime(
+                    year = int(temp_time[0]),
+                    month = int(temp_time[1]),
+                    day = int(temp_time[2]),
+                    hour = int(temp_time[3]),
+                    minute = int(temp_time[4])
+                )
+            # x月x日 x:x
+            else:
+                return datetime(
+                    year = now_time.date().year,
+                    month = int(temp_time[0]),
+                    day = int(temp_time[1]),
+                    hour = int(temp_time[2]),
+                    minute = int(temp_time[3])
+                )
 
     # 递归地爬取某条微博的所有图片，爬取结束后返回。
     def parse_image(self, response):
