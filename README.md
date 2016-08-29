@@ -104,15 +104,50 @@
             'thumbup': 'thumbup_table_name'
         }
 
+        # Maximum follow pages(requests) crawled for per user.
+        # It must be a positive number or None. None implys that crawling all follow pages.
+        MAX_FOLLOW_PAGES_PER_USER = None
+        # Maximum fan pages(requests) crawled for per user.
+        # It must be a positive number or None. None implys that crawling all fan pages.
+        MAX_FAN_PAGES_PER_USER = None
+        # Maximum post pages(requests) crawled for per user. And the maximum texts crawled in per post also equal to it.
+        # It must be a positive number or None. None implys that crawling all post pages.
+        MAX_POST_PAGES_PER_USER = 200
+        # Maximum image pages(requests) crawled in per post.
+        # It must be a positive number or None. None implys that crawling all image pages.
+        MAX_IMAGE_PAGES_PER_POST = None
+        # Maximum comment pages(requests) crawled in per post.
+        # It must be a positive number or None. None implys that crawling all comment pages.
+        MAX_COMMENT_PAGES_PER_POST = 50
+        # Maximum forward pages(requests) crawled in per post.
+        # It must be a positive number or None. None implys that crawling all forward pages.
+        MAX_FORWARD_PAGES_PER_POST = 50
+        # Maximum thumbup pages(requests) crawled in per post.
+        # It must be a positive number or None. None implys that crawling all thumbup pages.
+        MAX_THUMBUP_PAGES_PER_POST = 50
+
         # Your postgresql username.
         POSTGRESQL_USERNAME = 'your postgresql username'
         # Your postgresql password.
         POSTGRESQL_PASSWORD = 'your postgresql password'
         # Your postgresql databaes.
-        POSTGRESQL_DATABASE = 'your database name'
+        POSTGRESQL_DATABASE = 'your postgresql database name'
 
         # The IDs of users you want to crawl.
         CRAWLED_WEIBO_ID_LIST = ['123456789', '246812345', ...]
+
+        # Email notification.
+        MAIL_ENABLED = False
+        MAIL_FROM = 'your email'
+        MAIL_HOST = 'your email smtp server host'
+        # Your email smtp server port
+        MAIL_PORT = 587
+        MAIL_USER = 'your email'
+        MAIL_PASS = 'your email password'
+        # YOur email smtp server port type
+        MAIL_TLS = True
+        MAIL_SSL = False
+        TO_ADDR = 'send to where'
     ```
     其中，各个表的所有列的字段及数据类型分别为（它们不能被改变，表名可以改变）：
     

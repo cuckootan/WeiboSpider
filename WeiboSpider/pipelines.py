@@ -162,8 +162,9 @@ class WeibospiderPipeline(object):
                 )
                 self.connector.commit()
                 self.logger.info(
-                    'Write a follow item (user_id: {0:s}) into database. Seq: {1:d}'.format(
+                    'Write a follow item (user_id: {0:s}) including {1:d} followers into database. Seq: {2:d}'.format(
                         item['user_id'],
+                        item['size'],
                         self.follow_item_count
                     )
                 )
@@ -187,8 +188,9 @@ class WeibospiderPipeline(object):
                 )
                 self.connector.commit()
                 self.logger.info(
-                    'Write a fan item (user_id: {0:s}) into database. Seq: {1:d}'.format(
+                    'Write a fan item (user_id: {0:s}) including {1:d} fans into database. Seq: {2:d}'.format(
                         item['user_id'],
+                        item['size'],
                         self.fan_item_count
                     )
                 )
@@ -264,9 +266,10 @@ class WeibospiderPipeline(object):
                 )
                 self.connector.commit()
                 self.logger.info(
-                    'Write an image item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                    'Write an image item (user_id: {0:s} post_id: {1:s}) including {2:d} images into database. Seq: {3:d}'.format(
                         item['user_id'],
                         item['post_id'],
+                        item['size'],
                         self.image_item_count
                     )
                 )
@@ -292,9 +295,10 @@ class WeibospiderPipeline(object):
                 )
                 self.connector.commit()
                 self.logger.info(
-                    'Write a comment item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                    'Write a comment item (user_id: {0:s} post_id: {1:s}) including {2:d} into database. Seq: {3:d}'.format(
                         item['user_id'],
                         item['post_id'],
+                        item['size'],
                         self.comment_item_count
                     )
                 )
@@ -318,9 +322,10 @@ class WeibospiderPipeline(object):
                 )
                 self.connector.commit()
                 self.logger.info(
-                    'Write a forward item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                    'Write a forward item (user_id: {0:s} post_id: {1:s}) including {2:d} forwards into database. Seq: {3:d}'.format(
                         item['user_id'],
                         item['post_id'],
+                        item['size'],
                         self.forward_item_count
                     )
                 )
@@ -344,9 +349,10 @@ class WeibospiderPipeline(object):
                 )
                 self.connector.commit()
                 self.logger.info(
-                        'Write a thumb-up item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                        'Write a thumb-up item (user_id: {0:s} post_id: {1:s}) including {2:d} thumbups into database. Seq: {3:d}'.format(
                             item['user_id'],
                             item['post_id'],
+                            item['size'],
                             self.thumbup_item_count
                         )
                 )
