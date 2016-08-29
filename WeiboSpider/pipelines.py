@@ -295,7 +295,7 @@ class WeibospiderPipeline(object):
                 )
                 self.connector.commit()
                 self.logger.info(
-                    'Write a comment item (user_id: {0:s} post_id: {1:s}) including {2:d} into database. Seq: {3:d}'.format(
+                    'Write a comment item (user_id: {0:s} post_id: {1:s}) including {2:d} comments into database. Seq: {3:d}'.format(
                         item['user_id'],
                         item['post_id'],
                         item['size'],
