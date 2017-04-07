@@ -149,7 +149,7 @@ REQUEST_CUSTOM_COOKIE_LIST = [
         {
             "name": "PHPSESSID",
             "value": "12711b317a8ed457fa504f54a022e4a9",
-            "domain": ".weibo.cn",
+            "host": "weibo.cn",
             "path": "/"
         }
     ]
