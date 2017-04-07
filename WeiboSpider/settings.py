@@ -173,25 +173,25 @@ TABLE_NAME_DICT = {
 
 # Maximum follow pages(requests) crawled for per user.
 # It must be a positive number or None. None implys that crawling all follow pages.
-MAX_FOLLOW_PAGES_PER_USER = 50
+MAX_FOLLOW_PAGES_PER_USER = 30
 # Maximum fan pages(requests) crawled for per user.
 # It must be a positive number or None. None implys that crawling all fan pages.
-MAX_FAN_PAGES_PER_USER = 50
+MAX_FAN_PAGES_PER_USER = 30
 # Maximum post pages(requests) crawled for per user. And the maximum texts crawled in per post also equal to it.
 # It must be a positive number or None. None implys that crawling all post pages.
-MAX_POST_PAGES_PER_USER = 200
+MAX_POST_PAGES_PER_USER = 50
 # Maximum image pages(requests) crawled in per post.
 # It must be a positive number or None. None implys that crawling all image pages.
 MAX_IMAGE_PAGES_PER_POST = None
 # Maximum comment pages(requests) crawled in per post.
 # It must be a positive number or None. None implys that crawling all comment pages.
-MAX_COMMENT_PAGES_PER_POST = 50
+MAX_COMMENT_PAGES_PER_POST = 30
 # Maximum forward pages(requests) crawled in per post.
 # It must be a positive number or None. None implys that crawling all forward pages.
-MAX_FORWARD_PAGES_PER_POST = 50
+MAX_FORWARD_PAGES_PER_POST = 30
 # Maximum thumbup pages(requests) crawled in per post.
 # It must be a positive number or None. None implys that crawling all thumbup pages.
-MAX_THUMBUP_PAGES_PER_POST = 50
+MAX_THUMBUP_PAGES_PER_POST = 30
 
 # Your postgresql username.
 POSTGRESQL_USERNAME = 'your postgresql username'
