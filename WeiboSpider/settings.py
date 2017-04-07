@@ -21,18 +21,18 @@ NEWSPIDER_MODULE = 'WeiboSpider.spiders'
 # Obey robots.txt rules
 #ROBOTSTXT_OBEY = True
 
-CONCURRENT_ITEMS = 100
+CONCURRENT_ITEMS = 20
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 10
+CONCURRENT_REQUESTS = 2
 
 # Configure a delay for requests for the same website (default: 0)
 # See http://scrapy.readthedocs.org/en/latest/topics/settings.html#download-delay
 # See also autothrottle settings and docs
-DOWNLOAD_DELAY = 1
+DOWNLOAD_DELAY = 8
 DOWNLOAD_TIMEOUT = 300
 # The download delay setting will honor only one of:
-CONCURRENT_REQUESTS_PER_DOMAIN = 10
+CONCURRENT_REQUESTS_PER_DOMAIN = 2
 #CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
@@ -42,10 +42,10 @@ CONCURRENT_REQUESTS_PER_DOMAIN = 10
 #TELNETCONSOLE_ENABLED = False
 
 # Override the default request headers:
-DEFAULT_REQUEST_HEADERS = {
-   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-   'Accept-Language': 'en-US,en;q=0.5',
-}
+# DEFAULT_REQUEST_HEADERS = {
+#    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+#    'Accept-Language': 'en-US,en;q=0.5',
+# }
 
 # Enable or disable spider middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/spider-middleware.html
@@ -57,8 +57,12 @@ DEFAULT_REQUEST_HEADERS = {
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
 # Use my own cookie middleware.
 DOWNLOADER_MIDDLEWARES = {
-    'WeiboSpider.middlewares.CookiesMiddleware': 401,
-    'WeiboSpider.middlewares.UserAgentsMiddleware': 402
+    'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+    'scrapy.downloadermiddlewares.defaultheaders.DefaultHeadersMiddleware': None,
+    'scrapy.downloadermiddlewares.cookies.CookiesMiddleware': None,
+    'WeiboSpider.middlewares.CustomCookiesMiddleware': 401,
+    'WeiboSpider.middlewares.CustomUserAgentsMiddleware': 402,
+    'WeiboSpider.middlewares.CustomHeadersMiddleware': 403
 }
 
 # Enable or disable extensions
@@ -92,7 +96,7 @@ AUTOTHROTTLE_MAX_DELAY = 10
 # each remote server
 AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
 # Enable showing throttling stats for every response received:
-#AUTOTHROTTLE_DEBUG = False
+AUTOTHROTTLE_DEBUG = True
 
 # Enable and configure HTTP caching (disabled by default)
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html#httpcache-middleware-settings
@@ -102,8 +106,58 @@ AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
 #HTTPCACHE_IGNORE_HTTP_CODES = []
 #HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
 
+REQUEST_CUSTOM_USER_AGENT_LIST = [
+    {
+        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+    }
+]
+
+REQUEST_CUSTOM_HEADER_LIST = [
+    {
+        "Host": "weibo.cn",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Accept-Encoding": "gzip, deflate",
+        "Connection": "keep-alive",
+        "Upgrade-Insecure-Requests": "1"
+    }
+]
+
+# If set to True, WEIBO_LOGIN_INFO_LIST will be ignored.
+CUSTOM_COOKIES = True
+
+REQUEST_CUSTOM_COOKIE_LIST = [
+    [
+        {
+            "name": "_T_WM",
+            "value": "f64c564b868e1cf4524e03ac8e73dbf1",
+            "domain": ".weibo.cn",
+            "path": "/"
+        },
+        {
+            "name": "SUB",
+            "value": "_2A25141EKDeRhGeNM71AX9y7Ezj-IHXVXLH9CrDV6PUJbkdAKLUfbkW1MxbUzn6ftDpbR9LG294VmZnBBrg..",
+            "domain": ".weibo.cn",
+            "path": "/"
+        },
+        {
+            "name": "gsid_CTandWM",
+            "value": "4u4191d91cCxb8HotkddOlZRcdL",
+            "domain": ".weibo.cn",
+            "path": "/"
+        },
+        {
+            "name": "PHPSESSID",
+            "value": "12711b317a8ed457fa504f54a022e4a9",
+            "domain": ".weibo.cn",
+            "path": "/"
+        }
+    ]
+]
+
 # Your whole weibo username and password pairs.
-WEIBO_LOGIN_INFO_LIST = [('your username_1', 'your password_1'), ('your username_2', 'your password_2'), ...]
+# WEIBO_LOGIN_INFO_LIST = [('your username_1', 'your password_1'), ('your username_2', 'your password_2'), ...]
+
 # Each name of tables can be defined here (each value of items). These keys are not changeable.
 TABLE_NAME_DICT = {
     'user_info': 'user_info_table_name',
@@ -119,10 +173,10 @@ TABLE_NAME_DICT = {
 
 # Maximum follow pages(requests) crawled for per user.
 # It must be a positive number or None. None implys that crawling all follow pages.
-MAX_FOLLOW_PAGES_PER_USER = None
+MAX_FOLLOW_PAGES_PER_USER = 50
 # Maximum fan pages(requests) crawled for per user.
 # It must be a positive number or None. None implys that crawling all fan pages.
-MAX_FAN_PAGES_PER_USER = None
+MAX_FAN_PAGES_PER_USER = 50
 # Maximum post pages(requests) crawled for per user. And the maximum texts crawled in per post also equal to it.
 # It must be a positive number or None. None implys that crawling all post pages.
 MAX_POST_PAGES_PER_USER = 200
@@ -160,4 +214,4 @@ MAIL_PASS = 'your email password'
 # YOur email smtp server port type
 MAIL_TLS = True
 MAIL_SSL = False
-TO_ADDR = 'send to where'
+TO_ADDR = ['send to where']

@@ -7,7 +7,7 @@
 
 import sys, psycopg2, logging
 from psycopg2 import errorcodes
-from .send_email import EmailSender
+from scrapy.mail import MailSender
 from .items import UserInfoItem, FollowItem, FanItem, \
     PostInfoItem, TextItem, ImageItem, CommentItem, ForwardItem, ThumbupItem
 
@@ -22,8 +22,8 @@ class WeibospiderPipeline(object):
        
         self.mail_enabled = settings.get('MAIL_ENABLED')
         if self.mail_enabled:
-            self.emailer = EmailSender()
-            self.emailer.from_settings(settings)
+            self.mailer = MailSender()
+            self.mailer.from_settings(settings)
             self.to_addr = settings.get('TO_ADDR')
 
         self.user_info_item_count = 1
@@ -112,8 +112,8 @@ class WeibospiderPipeline(object):
         self.connector.close()
         
         if self.mail_enabled:
-            self.emailer.send(
-                to_addr = self.to_addr,
+            self.mailer.send(
+                to = self.to_addr,
                 subject = '爬虫结束',
                 body = '共抓取 {0:d} 条微博，{1:d} 条评论，{2:d} 条转发，{3:d} 条点赞'.format(
                     self.post_info_item_count,

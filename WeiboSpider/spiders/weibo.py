@@ -32,6 +32,9 @@ class WeiboSpider(CrawlSpider):
         self.forward_lock = threading.Lock()
         self.thumbup_lock = threading.Lock()
 
+    def error_handler(self):
+        self.close(reason = "error")
+
     def start_requests(self):
         self.logger.info('start...')
 
@@ -42,7 +45,8 @@ class WeiboSpider(CrawlSpider):
             yield scrapy.Request(
                 url = user_info_url,
                 meta = {'user_id': user_id},
-                callback = self.parse_user_info
+                callback = self.parse_user_info,
+                errback = self.error_handler
             )
 
             # follow_item 的结构为：{'user_id': xxx, 'follow_list': [1th_follow, 2th_follow, ...]}。
@@ -67,7 +71,8 @@ class WeiboSpider(CrawlSpider):
             yield scrapy.Request(
                 url = follow_start_url,
                 meta = {'item': follow_item},
-                callback = self.parse_follow
+                callback = self.parse_follow,
+                errback = self.error_handler
             )
 
             fan_start_url = 'http://weibo.cn/' + user_id + '/fans?page=1'
@@ -75,15 +80,17 @@ class WeiboSpider(CrawlSpider):
             yield scrapy.Request(
                 url = fan_start_url,
                 meta = {'item': fan_item},
-                callback = self.parse_fan
+                callback = self.parse_fan,
+                errback = self.error_handler
             )
 
-            post_info_start_url = 'http://weibo.cn/' + user_id + '/profile?page=1'
+            post_info_start_url = 'http://weibo.cn/' + user_id + '?filter=1&page=1'
             # 生成首条微博的基本信息的 Request 对象，用以爬取当前用户的首条微博及其之后的所有微博的基本信息。
             yield scrapy.Request(
                 url = post_info_start_url,
                 meta = {'user_id': user_id},
-                callback = self.parse_post_info
+                callback = self.parse_post_info,
+                errback = self.error_handler
             )
 
     # 爬取当前用户的个人信息并返回，并且生成关注，粉丝，微博基本信息的 Requst对象。
@@ -96,15 +103,19 @@ class WeiboSpider(CrawlSpider):
             district = None
         )
 
+        div_selector = response.xpath('//div[@class = "c" and contains(text(), "昵称")]')
         user_info_item['user_id'] = response.meta['user_id']
 
-        for div_selector in response.xpath('//div[@class="c"]'):
-            if div_selector.xpath('text()') and div_selector.xpath('text()').extract_first()[:2] == '昵称':
-                break
+        text = div_selector.xpath('text()').extract()
+        for item in text:
+            temp = re.split(':|：', item)
 
-        user_info_item['user_name'] = div_selector.xpath('text()[1]').extract_first()[3:]
-        user_info_item['gender'] = div_selector.xpath('text()[3]').extract_first()[3:]
-        user_info_item['district'] = div_selector.xpath('text()[4]').extract_first()[3:]
+            if temp[0] == '昵称':
+                user_info_item['user_name'] = temp[1]
+            elif temp[0] == '性别':
+                user_info_item['gender'] = temp[1]
+            elif temp[0] == '地区':
+                user_info_item['district'] = temp[1]
 
         # 爬取当前用户的个人信息结束，返回。
         yield user_info_item
@@ -114,16 +125,16 @@ class WeiboSpider(CrawlSpider):
         follow_item = response.meta['item']
 
         for table_selector in response.xpath('/html/body/table'):
-            follow_item['follow_list'].append(table_selector.xpath('tr/td[2]/a[1]/text()').extract_first())
+            follow_item['follow_list'].append(table_selector.xpath('//td[2]/a/text()').extract_first())
 
         # 如果后面还有，则生成下一页关注人的 Request 对象。
-        if response.xpath('//*[@id="pagelist"]') \
-                and response.xpath('//*[@id="pagelist"]/form/div/a[1]/text()').extract_first() == '下页':
-            next_url = 'http://weibo.cn' + response.xpath('//*[@id="pagelist"]/form/div/a[1]/@href').extract_first()
+        if response.xpath('//div[@id="pagelist"]//a[contains(text(), "下页")]'):
+            next_url = 'http://weibo.cn' + response.xpath('//div[@id = "pagelist"]/form/div/a[1]/@href').extract_first()
             request = scrapy.Request(
                 url = next_url,
                 meta = {'item': follow_item},
-                callback = self.parse_follow
+                callback = self.parse_follow,
+                errback = self.error_handler
             )
 
             if not self.settings.get('MAX_FOLLOW_PAGES_PER_USER'):
@@ -150,22 +161,19 @@ class WeiboSpider(CrawlSpider):
     # 递归地爬取当前用户的所有粉丝，爬取结束后返回。
     def parse_fan(self, response):
         fan_item = response.meta['item']
-
-        for div_selector in response.xpath('/html/body/div[@class="c"]'):
-            if div_selector.xpath('table'):
-                break
+        div_selector = response.xpath('/html/body/div[@class = "c" and table]')
 
         for table_selector in div_selector.xpath('table'):
-            fan_item['fan_list'].append(table_selector.xpath('tr/td[2]/a[1]/text()').extract_first())
+            fan_item['fan_list'].append(table_selector.xpath('//td[2]/a/text()').extract_first())
 
         # 如果后面还有，则生成下一页粉丝的 Request 对象。
-        if response.xpath('//*[@id="pagelist"]') \
-                and response.xpath('//*[@id="pagelist"]/form/div/a[1]/text()').extract_first() == '下页':
-            next_url = 'http://weibo.cn' + response.xpath('//*[@id="pagelist"]/form/div/a[1]/@href').extract_first()
+        if response.xpath('//div[@id="pagelist"]//a[contains(text(), "下页")]'):
+            next_url = 'http://weibo.cn' + response.xpath('//div[@id="pagelist"]/form/div/a[1]/@href').extract_first()
             request = scrapy.Request(
                 url = next_url,
                 meta = {'item': fan_item},
-                callback = self.parse_fan
+                callback = self.parse_fan,
+                errback = self.error_handler
             )
 
             if not self.settings.get('MAX_FAN_PAGES_PER_USER'):
@@ -191,156 +199,156 @@ class WeiboSpider(CrawlSpider):
 
     # 爬取当前用户的所有微博的基本信息以及文本。对于每一条微博，爬取完基本信息后以及文本后，返回这两者，然后生成这条微博相关的第一张图片，第一页评论, 第一页转发的 Request 对象。
     def parse_post_info(self, response):
-        for div_selector in response.xpath('//div[@class="c"]'):
-            if div_selector.xpath('@id'):
-                # 转发的微博, 不爬取。
-                if div_selector.xpath('div[1]/span[1]') \
-                        and div_selector.xpath('div[1]/span[1]/text()').extract_first()[:2] == '转发':
-                    continue
+        for div_selector in response.xpath('//div[@class="c" and @id]'):
+            # post_info_item 的结构为: {'user_id': xxx, 'post_id': xxx, 'publish_time': xxx}。
+            post_info_item = PostInfoItem(
+                user_id = None,
+                post_id = None,
+                publish_time = None
+            )
+            post_info_item['user_id'] = response.meta['user_id']
+            post_info_item['post_id'] = div_selector.xpath('@id').extract_first()
 
-                # post_info_item 的结构为: {'user_id': xxx, 'post_id': xxx, 'publish_time': xxx}。
-                post_info_item = PostInfoItem(
-                    user_id = None,
-                    post_id = None,
-                    publish_time = None
-                )
-                post_info_item['user_id'] = response.meta['user_id']
-                post_info_item['post_id'] = div_selector.xpath('@id').extract_first()
+            # text_item 的结构体为: {'user_id': xxx, 'post_id': xxx, 'text': xxx}
+            text_item = TextItem(
+                user_id = None,
+                post_id = None,
+                text = None
+            )
+            text_item['user_id'] = post_info_item['user_id']
+            text_item['post_id'] = post_info_item['post_id']
+            text_item['text'] = div_selector.xpath('div[1]/span[@class="ctt"]/text()').extract_first()
 
-                # text_item 的结构体为: {'user_id': xxx, 'post_id': xxx, 'text': xxx}
-                text_item = TextItem(
-                    user_id = None,
-                    post_id = None,
-                    text = None
-                )
-                text_item['user_id'] = post_info_item['user_id']
-                text_item['post_id'] = post_info_item['post_id']
-                text_item['text'] = div_selector.xpath('div[1]/span[@class="ctt"]/text()').extract_first()
+            # 如果存在图像。
+            if div_selector.xpath('div[2]'):
+                post_info_item['publish_time'] = div_selector.xpath('div[2]/span[@class="ct"]/text()').extract_first()
+                image_start_url = div_selector.xpath('div[2]/a[1]/@href').extract_first()
 
-                # 如果存在图像。
-                if div_selector.xpath('div[2]'):
-                    post_info_item['publish_time'] = div_selector.xpath('div[2]/span[@class="ct"]/text()').extract_first()
-                    image_start_url = div_selector.xpath('div[2]/a[1]/@href').extract_first()
+                for a_selector in div_selector.xpath('div[2]/a'):
+                    temp_str = a_selector.xpath('text()').extract_first()
 
-                    for a_selector in div_selector.xpath('div[2]/a'):
-                        temp_str = a_selector.xpath('text()').extract_first()
+                    if not temp_str:
+                        continue
 
-                        if not temp_str:
-                            continue
-
-                        if temp_str[:1] == '赞':
-                            start_thumbup_url = re.split(r'(http://weibo.cn/attitude/[^/]+)', a_selector.xpath('@href').extract_first())[1] \
+                    if temp_str[:1] == '赞':
+                        start_thumbup_url = re.split(r'(http://weibo.cn/attitude/[^/]+)', a_selector.xpath('@href').extract_first())[1] \
                                                 + '?#attitude'
-                        elif temp_str[:2] == '转发':
-                            forward_start_url = a_selector.xpath('@href').extract_first()
-                        elif temp_str[:2] == '评论':
-                            comment_start_url = a_selector.xpath('@href').extract_first()
-                else:
-                    post_info_item['publish_time'] = div_selector.xpath('div[1]/span[@class="ct"]/text()').extract_first()
-                    image_start_url = None
+                    elif temp_str[:2] == '转发':
+                        forward_start_url = a_selector.xpath('@href').extract_first()
+                    elif temp_str[:2] == '评论':
+                        comment_start_url = a_selector.xpath('@href').extract_first()
+            else:
+                post_info_item['publish_time'] = div_selector.xpath('div[1]/span[@class="ct"]/text()').extract_first()
+                image_start_url = None
 
-                    for a_selector in div_selector.xpath('div[1]/a'):
-                        temp_str = a_selector.xpath('text()').extract_first()
-                        if temp_str[:1] == '赞':
-                            start_thumbup_url = re.split(r'(http://weibo.cn/attitude/[^/]+)', a_selector.xpath('@href').extract_first())[1] \
+                for a_selector in div_selector.xpath('div[1]/a'):
+                    temp_str = a_selector.xpath('text()').extract_first()
+                    if temp_str[:1] == '赞':
+                        start_thumbup_url = re.split(r'(http://weibo.cn/attitude/[^/]+)', a_selector.xpath('@href').extract_first())[1] \
                                                 + '?#attitude'
-                        elif temp_str[:2] == '转发':
-                            forward_start_url = a_selector.xpath('@href').extract_first()
-                        elif temp_str[:2] == '评论':
-                            comment_start_url = a_selector.xpath('@href').extract_first()
+                    elif temp_str[:2] == '转发':
+                        forward_start_url = a_selector.xpath('@href').extract_first()
+                    elif temp_str[:2] == '评论':
+                        comment_start_url = a_selector.xpath('@href').extract_first()
 
-                publish_time = re.split('来自', post_info_item['publish_time'])[0].strip()
-                post_info_item['publish_time'] = str(self.handle_time(self.get_time(response.headers['date']), publish_time))
+            publish_time = re.split('来自', post_info_item['publish_time'])[0].strip()
+            post_info_item['publish_time'] = str(self.handle_time(self.get_time(response.headers['date']), publish_time))
 
-                # 返回当前用户的当前微博的基本信息以及文本。
-                yield post_info_item
-                yield text_item
+            # 返回当前用户的当前微博的基本信息以及文本。
+            yield post_info_item
+            yield text_item
 
-                # comment_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'comment_list': [json.dumps({'comment_user': 1th_user, 'comment_text': 1th_text, 'comment_time': 1th_time}), json.dumps({'comment_user': 2nd_user, 'comment_text': 2nd_text, 'comment_time': 2nd_time}), ...]}。
-                comment_item = CommentItem(
+            # comment_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'comment_list': [json.dumps({'comment_user': 1th_user, 'comment_text': 1th_text, 'comment_time': 1th_time}), json.dumps({'comment_user': 2nd_user, 'comment_text': 2nd_text, 'comment_time': 2nd_time}), ...]}。
+            comment_item = CommentItem(
+                user_id = None,
+                post_id = None,
+                comment_list = None,
+                size = None
+            )
+            # forward_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'forward_list': [json.dumps({'forward_user': 1th_user, 'forward_time': 1th_time}), json.dumps({'forward_user': 2nd_user, 'forward_time': 2nd_time}), ...]}。
+            forward_item = ForwardItem(
+                user_id = None,
+                post_id = None,
+                forward_list = None,
+                size = None
+            )
+            # thumbup_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'thumbup_list': [json.dumps({'thumbup_user': 1th_user, 'thumbup_time': 1th_time}), json.dumps({'thumbup_user': 2nd_user, 'thumbup_time': 2nd_time}), ...]}。
+            thumbup_item = ThumbupItem(
+                user_id = None,
+                post_id = None,
+                thumbup_list = None,
+                size = None
+            )
+
+            comment_item['user_id'] = post_info_item['user_id']
+            comment_item['post_id'] = post_info_item['post_id']
+            comment_item['comment_list'] = []
+            forward_item['user_id'] = post_info_item['user_id']
+            forward_item['post_id'] = post_info_item['post_id']
+            forward_item['forward_list'] = []
+            thumbup_item['user_id'] = post_info_item['user_id']
+            thumbup_item['post_id'] = post_info_item['post_id']
+            thumbup_item['thumbup_list'] = []
+
+            # 如果存在图片，则生成这条微博的第一张图片的 Request 对象。
+            if image_start_url:
+                # image_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'image_list': [1th_image, 2nd_image, ...]}。
+                image_item = ImageItem(
                     user_id = None,
                     post_id = None,
-                    comment_list = None,
-                    size = None
-                )
-                # forward_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'forward_list': [json.dumps({'forward_user': 1th_user, 'forward_time': 1th_time}), json.dumps({'forward_user': 2nd_user, 'forward_time': 2nd_time}), ...]}。
-                forward_item = ForwardItem(
-                    user_id = None,
-                    post_id = None,
-                    forward_list = None,
-                    size = None
-                )
-                # thumbup_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'thumbup_list': [json.dumps({'thumbup_user': 1th_user, 'thumbup_time': 1th_time}), json.dumps({'thumbup_user': 2nd_user, 'thumbup_time': 2nd_time}), ...]}。
-                thumbup_item = ThumbupItem(
-                    user_id = None,
-                    post_id = None,
-                    thumbup_list = None,
+                    image_list = None,
                     size = None
                 )
 
-                comment_item['user_id'] = post_info_item['user_id']
-                comment_item['post_id'] = post_info_item['post_id']
-                comment_item['comment_list'] = []
-                forward_item['user_id'] = post_info_item['user_id']
-                forward_item['post_id'] = post_info_item['post_id']
-                forward_item['forward_list'] = []
-                thumbup_item['user_id'] = post_info_item['user_id']
-                thumbup_item['post_id'] = post_info_item['post_id']
-                thumbup_item['thumbup_list'] = []
+                image_item['user_id'] = post_info_item['user_id']
+                image_item['post_id'] = post_info_item['post_id']
+                image_item['image_list'] = []
 
-                # 如果存在图片，则生成这条微博的第一张图片的 Request 对象。
-                if image_start_url:
-                    # image_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'image_list': [1th_image, 2nd_image, ...]}。
-                    image_item = ImageItem(
-                        user_id = None,
-                        post_id = None,
-                        image_list = None,
-                        size = None
-                    )
-
-                    image_item['user_id'] = post_info_item['user_id']
-                    image_item['post_id'] = post_info_item['post_id']
-                    image_item['image_list'] = []
-
-                    yield scrapy.Request(
-                        url = image_start_url,
-                        meta = {'item': image_item},
-                        priority = 1,
-                        callback = self.parse_image
-                    )
-
-                # 生成这条微博的第一页评论的 Request 对象。
                 yield scrapy.Request(
-                    url = comment_start_url,
-                    meta = {'item': comment_item},
+                    url = image_start_url,
+                    meta = {'item': image_item},
                     priority = 1,
-                    callback = self.parse_comment
+                    callback = self.parse_image,
+                    errback = self.error_handler
                 )
 
-                # 生成这条微博的第一页转发的 Request 对象。
-                yield scrapy.Request(
-                    url = forward_start_url,
-                    meta = {'item': forward_item},
-                    priority = 1,
-                    callback = self.parse_forward
-                )
-                # 生成这条微博的第一页点赞的 Request 对象。
-                yield scrapy.Request(
-                    url = start_thumbup_url,
-                    meta = {'item': thumbup_item},
-                    priority = 1,
-                    callback = self.parse_thumbup
-                )
+            # 生成这条微博的第一页评论的 Request 对象。
+            yield scrapy.Request(
+                url = comment_start_url,
+                meta = {'item': comment_item},
+                priority = 1,
+                callback = self.parse_comment,
+                errback = self.error_handler
+            )
+
+            # 生成这条微博的第一页转发的 Request 对象。
+            yield scrapy.Request(
+                url = forward_start_url,
+                meta = {'item': forward_item},
+                priority = 1,
+                callback = self.parse_forward,
+                errback = self.error_handler
+            )
+            # 生成这条微博的第一页点赞的 Request 对象。
+            yield scrapy.Request(
+                url = start_thumbup_url,
+                meta = {'item': thumbup_item},
+                priority = 1,
+                callback = self.parse_thumbup,
+                errback = self.error_handler
+            )
 
         # 如果当前用户还存在其他微博，则继续爬取它们的基本信息以及文本。由于每条微博是一个 Item，在爬取每一条微博的基本信息和文本后就会返回，因此当后面不存在微博时，不需要另作返回。
-        if response.xpath('//div[@class="pa" and @id="pagelist"]') \
-                and response.xpath('//div[@class="pa" and @id="pagelist"]/form/div/a[1]/text()').extract_first() == '下页':
+        href_selector = response.xpath('//div[@id="pagelist"]//a[contains(text(), "下页")]/@href')
+
+        if href_selector:
             next_url = 'http://weibo.cn' \
-                       + response.xpath('//div[@class="pa" and @id="pagelist"]/form/div/a[1]/@href').extract_first()
+                       + href_selector.extract_first()
             request = scrapy.Request(
                 url = next_url,
                 meta = {'user_id': response.meta['user_id']},
-                callback = self.parse_post_info
+                callback = self.parse_post_info,
+                errback = self.error_handler
             )
 
             if not self.settings.get('MAX_POST_PAGES_PER_USER'):
@@ -395,25 +403,28 @@ class WeiboSpider(CrawlSpider):
     def parse_image(self, response):
         image_item = response.meta['item']
 
-        for div_selector in response.xpath('/html/body/div[@class="c"]'):
-            # 如果只有一张图片，则保存到 list 后直接返回。
-            if div_selector.xpath('img'):
-                image_item['image_list'].append(div_selector.xpath('img/@src').extract_first())
-                return image_item
+        # div_selector = response.xpath('//div[@class = "c" and tc]')
+        #
+        # image_item['image_list'].append(div_selector.xpath('a/img/@src').extract_first())
+        # return image_item
 
-            if div_selector.xpath('a') and div_selector.xpath('a/img'):
-                break
+        div_selector = response.xpath('//div[@class = "c" and img]')
+        if div_selector:
+            image_item['image_list'].append(div_selector.xpath('img/@src').extract_first())
+            return image_item
 
-        image_item['image_list'].append(div_selector.xpath('a[1]/img/@src').extract_first())
+        div_selector = response.xpath('//div[@class = "c" and tc]')
+        image_item['image_list'].append(div_selector.xpath('a/img/@src').extract_first())
 
         # 如果后面还存在其他图片，则生成下一张图片的 Request 对象。
-        if div_selector.xpath('div[2]/a[1]/text()').extract_first() == '下一张' and div_selector.xpath('div[2]/a[2]'):
-            next_url = 'http://weibo.cn' + div_selector.xpath('div[2]/a[1]/@href').extract_first()
+        if div_selector.xpath('div[@class = "tc"][2]/a[contains(text(), "下一张")]'):
+            next_url = 'http://weibo.cn' + div_selector.xpath('div[@class = "tc"][2]/a/@href').extract_first()
             request = scrapy.Request(
                 url = next_url,
                 meta = {'item': image_item},
                 priority = 1,
-                callback = self.parse_image
+                callback = self.parse_image,
+                errback = self.error_handler
             )
 
             if not self.settings.get('MAX_IMAGE_PAGES_PER_POST'):
@@ -447,7 +458,7 @@ class WeiboSpider(CrawlSpider):
 
                 # 不抽取 @ 某人的评论以及回复的内容。
                 if div_selector.xpath('span[@class="ctt"]/a') or \
-                    div_selector.xpath('span[@class="ctt"]/text()[1]').extract_first() == '"回复"':
+                    div_selector.xpath('span[@class="ctt"]/text()[1]').extract_first() == '回复':
                     continue
 
                 comment_text = div_selector.xpath('span[@class="ctt"]/text()').extract_first()
@@ -469,7 +480,8 @@ class WeiboSpider(CrawlSpider):
                 url = next_url,
                 meta = {'item': comment_item},
                 priority = 1,
-                callback = self.parse_comment
+                callback = self.parse_comment,
+                errback = self.error_handler
             )
 
             if not self.settings.get('MAX_COMMENT_PAGES_PER_POST'):
@@ -520,7 +532,8 @@ class WeiboSpider(CrawlSpider):
                 url = next_url,
                 meta = {'item': forward_item},
                 priority = 1,
-                callback = self.parse_forward
+                callback = self.parse_forward,
+                errback = self.error_handler
             )
 
             if not self.settings.get('MAX_FORWARD_PAGES_PER_POST'):
@@ -572,7 +585,8 @@ class WeiboSpider(CrawlSpider):
                 url = next_url,
                 meta = {'item': thumbup_item},
                 priority = 1,
-                callback = self.parse_thumbup
+                callback = self.parse_thumbup,
+                errback = self.error_handler
             )
 
             if not self.settings.get('MAX_THUMBUP_PAGES_PER_POST'):
