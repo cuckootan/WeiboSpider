@@ -125,7 +125,7 @@ class WeiboSpider(CrawlSpider):
         follow_item = response.meta['item']
 
         for table_selector in response.xpath('/html/body/table'):
-            follow_item['follow_list'].append(table_selector.xpath('//td[2]/a/text()').extract_first())
+            follow_item['follow_list'].append(table_selector.xpath('//td[2]/a[1]/text()').extract_first())
 
         # 如果后面还有，则生成下一页关注人的 Request 对象。
         if response.xpath('//div[@id="pagelist"]//a[contains(text(), "下页")]'):
@@ -164,7 +164,7 @@ class WeiboSpider(CrawlSpider):
         div_selector = response.xpath('/html/body/div[@class = "c" and table]')
 
         for table_selector in div_selector.xpath('table'):
-            fan_item['fan_list'].append(table_selector.xpath('//td[2]/a/text()').extract_first())
+            fan_item['fan_list'].append(table_selector.xpath('//td[2]/a[1]/text()').extract_first())
 
         # 如果后面还有，则生成下一页粉丝的 Request 对象。
         if response.xpath('//div[@id="pagelist"]//a[contains(text(), "下页")]'):
