@@ -78,7 +78,7 @@ ITEM_PIPELINES = {
     'WeiboSpider.pipelines.WeibospiderPipeline': 300
 }
 
-LOG_LEVEL = 'INFO'
+LOG_LEVEL = 'DEBUG'
 
 # Default queue is LIFO, here uses FIFO.
 DEPTH_PRIORITY = 1
