@@ -79,11 +79,10 @@
     -   将 **Working directory** 字段填写为该项目的根目录的路径。比如：**/home/username/Project/WeiboSpider**；
     -   取消 **Add content roots to PYTHONPATH** 以及 **Add source roots to PYTHONPATH**。
 2.   配置 PostgreSQL 并建立数据库。打开 **/etc/postgresql/9.5/main/pg_hba.conf**，添加如下字段到更改用户权限的相应位置。
-    
     **local    all    your_username    trust**
-    
+
     或者
-    
+
     **local    all    your_username    md5**
 3.  程序中用到的所有配置都写在了项目中的 **settings.py** 里，因此将项目下载到本地后，只需配置更改其中的相应内容即可，无序修改其他源程序。
     主要包括：
