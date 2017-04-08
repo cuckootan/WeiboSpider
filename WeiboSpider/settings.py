@@ -59,7 +59,7 @@ CONCURRENT_REQUESTS_PER_DOMAIN = 2
 DOWNLOADER_MIDDLEWARES = {
     'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
     'scrapy.downloadermiddlewares.defaultheaders.DefaultHeadersMiddleware': None,
-    'scrapy.downloadermiddlewares.cookies.CookiesMiddleware': None,
+    # The order of custom cookies middleware can not be bigger than 700 (the one of built-in cookies middleware).
     'WeiboSpider.middlewares.CustomCookiesMiddleware': 401,
     'WeiboSpider.middlewares.CustomUserAgentsMiddleware': 402,
     'WeiboSpider.middlewares.CustomHeadersMiddleware': 403
