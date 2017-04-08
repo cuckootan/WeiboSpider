@@ -4,15 +4,12 @@ __author__ = 'Jason'
 
 from . import cookies
 
-import random, logging
+import random
 
 
 
 class CustomCookiesMiddleware(object):
     def __init__(self, settings):
-        debug = settings.get('COOKIES_DEBUG')
-        self.debug = debug if debug else False
-
         custom_cookies = settings.get('CUSTOM_COOKIES')
 
         if custom_cookies:

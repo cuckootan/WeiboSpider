@@ -17,6 +17,7 @@ class WeibospiderPipeline(object):
     def __init__(self, settings):
         self.username = settings.get('POSTGRESQL_USERNAME')
         self.password = settings.get('POSTGRESQL_PASSWORD')
+        self.host = settings.get('POSTGRESQL_HOST')
         self.database = settings.get('POSTGRESQL_DATABASE')
         self.table_name_dict = settings.get('TABLE_NAME_DICT')
        
@@ -51,6 +52,7 @@ class WeibospiderPipeline(object):
             self.connector = psycopg2.connect(
                 user = self.username,
                 password = self.password,
+                host = self.host,
                 database = self.database
             )
             self.cursor = self.connector.cursor()
