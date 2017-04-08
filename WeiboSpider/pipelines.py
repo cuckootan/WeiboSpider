@@ -150,6 +150,7 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.close_spider(spider)
         elif isinstance(item, FollowItem):
             try:
                 statement = (
@@ -176,6 +177,7 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.close_spider(spider)
         elif isinstance(item, FanItem):
             try:
                 statement = (
@@ -202,6 +204,7 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.close_spider(spider)
         elif isinstance(item, PostInfoItem):
             try:
                 statement = (
@@ -228,6 +231,7 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.close_spider(spider)
         elif isinstance(item, TextItem):
             try:
                 statement = (
@@ -254,6 +258,7 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.close_spider(spider)
         elif isinstance(item, ImageItem):
             try:
                 statement = (
@@ -281,6 +286,7 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.close_spider(spider)
         elif isinstance(item, CommentItem):
             try:
                 statement = (
@@ -310,6 +316,7 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.close_spider(spider)
         elif isinstance(item, ForwardItem):
             try:
                 statement = (
@@ -337,6 +344,7 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.close_spider(spider)
         elif isinstance(item, ThumbupItem):
             try:
                 statement = (
@@ -364,5 +372,6 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.close_spider(spider)
 
         return item

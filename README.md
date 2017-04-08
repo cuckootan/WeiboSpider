@@ -89,8 +89,84 @@
     主要包括：
 
     ```python
+        # Enable or disable downloader middlewares
+        # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
+        # Use my own cookie middleware.
+        DOWNLOADER_MIDDLEWARES = {
+            'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,
+            'scrapy.downloadermiddlewares.defaultheaders.DefaultHeadersMiddleware': None,
+            # The order of custom cookies middleware can not be bigger than 700 (the one of built-in cookies middleware).
+            'WeiboSpider.middlewares.CustomCookiesMiddleware': 401,
+            'WeiboSpider.middlewares.CustomUserAgentsMiddleware': 402,
+            'WeiboSpider.middlewares.CustomHeadersMiddleware': 403
+        }
+
+        # Configure item pipelines
+        # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html
+        # Use my own item pipline.
+        ITEM_PIPELINES = {
+            'WeiboSpider.pipelines.WeibospiderPipeline': 300
+        }
+
+        LOG_LEVEL = 'DEBUG'
+
+        # Default queue is LIFO, here uses FIFO.
+        DEPTH_PRIORITY = 1
+        SCHEDULER_DISK_QUEUE = 'scrapy.squeues.PickleFifoDiskQueue'
+        SCHEDULER_MEMORY_QUEUE = 'scrapy.squeues.FifoMemoryQueue'
+
+        REQUEST_CUSTOM_USER_AGENT_LIST = [
+            {
+                "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+            }
+        ]
+
+        REQUEST_CUSTOM_HEADER_LIST = [
+            {
+                "Host": "weibo.cn",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Accept-Encoding": "gzip, deflate",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1"
+            }
+        ]
+
+        # If set to True, WEIBO_LOGIN_INFO_LIST will be ignored.
+        CUSTOM_COOKIES = True
+
+        REQUEST_CUSTOM_COOKIE_LIST = [
+            [
+                {
+                    "name": "_T_WM",
+                    "value": "f64c564b868e1cf4524e03ac8e73dbf1",
+                    "domain": ".weibo.cn",
+                    "path": "/"
+                },
+                {
+                    "name": "SUB",
+                    "value": "_2A25141EKDeRhGeNM71AX9y7Ezj-IHXVXLH9CrDV6PUJbkdAKLUfbkW1MxbUzn6ftDpbR9LG294VmZnBBrg..",
+                    "domain": ".weibo.cn",
+                    "path": "/"
+                },
+                {
+                    "name": "gsid_CTandWM",
+                    "value": "4u4191d91cCxb8HotkddOlZRcdL",
+                    "domain": ".weibo.cn",
+                    "path": "/"
+                },
+                {
+                    "name": "PHPSESSID",
+                    "value": "12711b317a8ed457fa504f54a022e4a9",
+                    "host": "weibo.cn",
+                    "path": "/"
+                }
+            ]
+        ]
+
         # Your whole weibo username and password pairs.
-        WEIBO_LOGIN_INFO_LIST = [('your username_1', 'your password_1'), ('your username_2', 'your password_2'), ...]
+        # WEIBO_LOGIN_INFO_LIST = [('your username_1', 'your password_1'), ('your username_2', 'your password_2'), ...]
+
         # Each name of tables can be defined here (each value of items). These keys are not changeable.
         TABLE_NAME_DICT = {
             'user_info': 'user_info_table_name',
@@ -106,25 +182,25 @@
 
         # Maximum follow pages(requests) crawled for per user.
         # It must be a positive number or None. None implys that crawling all follow pages.
-        MAX_FOLLOW_PAGES_PER_USER = None
+        MAX_FOLLOW_PAGES_PER_USER = 30
         # Maximum fan pages(requests) crawled for per user.
         # It must be a positive number or None. None implys that crawling all fan pages.
-        MAX_FAN_PAGES_PER_USER = None
+        MAX_FAN_PAGES_PER_USER = 30
         # Maximum post pages(requests) crawled for per user. And the maximum texts crawled in per post also equal to it.
         # It must be a positive number or None. None implys that crawling all post pages.
-        MAX_POST_PAGES_PER_USER = 200
+        MAX_POST_PAGES_PER_USER = 50
         # Maximum image pages(requests) crawled in per post.
         # It must be a positive number or None. None implys that crawling all image pages.
         MAX_IMAGE_PAGES_PER_POST = None
         # Maximum comment pages(requests) crawled in per post.
         # It must be a positive number or None. None implys that crawling all comment pages.
-        MAX_COMMENT_PAGES_PER_POST = 50
+        MAX_COMMENT_PAGES_PER_POST = 30
         # Maximum forward pages(requests) crawled in per post.
         # It must be a positive number or None. None implys that crawling all forward pages.
-        MAX_FORWARD_PAGES_PER_POST = 50
+        MAX_FORWARD_PAGES_PER_POST = 30
         # Maximum thumbup pages(requests) crawled in per post.
         # It must be a positive number or None. None implys that crawling all thumbup pages.
-        MAX_THUMBUP_PAGES_PER_POST = 50
+        MAX_THUMBUP_PAGES_PER_POST = 30
 
         # Your postgresql username.
         POSTGRESQL_USERNAME = 'your postgresql username'
@@ -147,8 +223,9 @@
         # YOur email smtp server port type
         MAIL_TLS = True
         MAIL_SSL = False
-        TO_ADDR = 'send to where'
+        TO_ADDR = ['send to where']
     ```
+
     其中，各个表的所有列的字段及数据类型分别为（它们不能被改变，表名可以改变）：
     
     -   user_info 对应表的结构为： **(user_id varchar(20), user_name text, gender varchar(5), district text)**
