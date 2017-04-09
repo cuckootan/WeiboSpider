@@ -133,7 +133,6 @@ class WeiboSpider(CrawlSpider):
         print("parse_follow")
 
         for table_selector in response.xpath('//table'):
-            print(table_selector.xpath('.//td[2]/a[1]/text()').extract_first())
             follow_item['follow_list'].append(table_selector.xpath('.//td[2]/a[1]/text()').extract_first())
 
         # 如果后面还有，则生成下一页关注人的 Request 对象。

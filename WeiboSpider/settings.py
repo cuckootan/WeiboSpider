@@ -24,7 +24,7 @@ NEWSPIDER_MODULE = 'WeiboSpider.spiders'
 CONCURRENT_ITEMS = 20
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
-CONCURRENT_REQUESTS = 2
+CONCURRENT_REQUESTS = 4
 
 # Configure a delay for requests for the same website (default: 0)
 # See http://scrapy.readthedocs.org/en/latest/topics/settings.html#download-delay
@@ -32,7 +32,7 @@ CONCURRENT_REQUESTS = 2
 DOWNLOAD_DELAY = 8
 DOWNLOAD_TIMEOUT = 300
 # The download delay setting will honor only one of:
-CONCURRENT_REQUESTS_PER_DOMAIN = 2
+CONCURRENT_REQUESTS_PER_DOMAIN = 4
 #CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
@@ -108,49 +108,50 @@ AUTOTHROTTLE_DEBUG = True
 
 REQUEST_CUSTOM_USER_AGENT_LIST = [
     {
-        "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0"
+        'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:52.0) Gecko/20100101 Firefox/52.0'
     }
 ]
 
 REQUEST_CUSTOM_HEADER_LIST = [
     {
-        "Host": "weibo.cn",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Accept-Encoding": "gzip, deflate",
-        "Connection": "keep-alive",
-        "Upgrade-Insecure-Requests": "1"
+        'Host': 'weibo.cn',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1'
     }
 ]
 
 # If set to True, WEIBO_LOGIN_INFO_LIST will be ignored.
 CUSTOM_COOKIES = True
 
+# Add cookies for "weibo.cn".
 REQUEST_CUSTOM_COOKIE_LIST = [
     [
         {
-            "name": "_T_WM",
-            "value": "f64c564b868e1cf4524e03ac8e73dbf1",
-            "domain": ".weibo.cn",
-            "path": "/"
+            'name': '_T_WM',
+            'value': 'f64c564b868e1cf4524e03ac8e73dbf1',
+            'domain': '.weibo.cn',
+            'path': '/'
         },
         {
-            "name": "SUB",
-            "value": "_2A25141EKDeRhGeNM71AX9y7Ezj-IHXVXLH9CrDV6PUJbkdAKLUfbkW1MxbUzn6ftDpbR9LG294VmZnBBrg..",
-            "domain": ".weibo.cn",
-            "path": "/"
+            'name': 'SUB',
+            'value': '_2A25141EKDeRhGeNM71AX9y7Ezj-IHXVXLH9CrDV6PUJbkdAKLUfbkW1MxbUzn6ftDpbR9LG294VmZnBBrg..',
+            'domain': '.weibo.cn',
+            'path': '/'
         },
         {
-            "name": "gsid_CTandWM",
-            "value": "4u4191d91cCxb8HotkddOlZRcdL",
-            "domain": ".weibo.cn",
-            "path": "/"
+            'name': 'gsid_CTandWM',
+            'value': '4u4191d91cCxb8HotkddOlZRcdL',
+            'domain': '.weibo.cn',
+            'path': '/'
         },
         {
-            "name": "PHPSESSID",
-            "value": "12711b317a8ed457fa504f54a022e4a9",
-            "host": "weibo.cn",
-            "path": "/"
+            'name': 'PHPSESSID',
+            'value': '12711b317a8ed457fa504f54a022e4a9',
+            'host': 'weibo.cn',
+            'path': '/'
         }
     ]
 ]
@@ -173,25 +174,25 @@ TABLE_NAME_DICT = {
 
 # Maximum follow pages(requests) crawled for per user.
 # It must be a positive number or None. None implys that crawling all follow pages.
-MAX_FOLLOW_PAGES_PER_USER = 30
+MAX_FOLLOW_PAGES_PER_USER = 5
 # Maximum fan pages(requests) crawled for per user.
 # It must be a positive number or None. None implys that crawling all fan pages.
-MAX_FAN_PAGES_PER_USER = 30
+MAX_FAN_PAGES_PER_USER = 5
 # Maximum post pages(requests) crawled for per user. And the maximum texts crawled in per post also equal to it.
 # It must be a positive number or None. None implys that crawling all post pages.
-MAX_POST_PAGES_PER_USER = 50
+MAX_POST_PAGES_PER_USER = 2
 # Maximum image pages(requests) crawled in per post.
 # It must be a positive number or None. None implys that crawling all image pages.
 MAX_IMAGE_PAGES_PER_POST = None
 # Maximum comment pages(requests) crawled in per post.
 # It must be a positive number or None. None implys that crawling all comment pages.
-MAX_COMMENT_PAGES_PER_POST = 30
+MAX_COMMENT_PAGES_PER_POST = 2
 # Maximum forward pages(requests) crawled in per post.
 # It must be a positive number or None. None implys that crawling all forward pages.
-MAX_FORWARD_PAGES_PER_POST = 30
+MAX_FORWARD_PAGES_PER_POST = 2
 # Maximum thumbup pages(requests) crawled in per post.
 # It must be a positive number or None. None implys that crawling all thumbup pages.
-MAX_THUMBUP_PAGES_PER_POST = 30
+MAX_THUMBUP_PAGES_PER_POST = 2
 
 # Your postgresql username.
 POSTGRESQL_USERNAME = 'your postgresql username'
