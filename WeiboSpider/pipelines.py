@@ -9,7 +9,7 @@ import sys, psycopg2, logging
 from psycopg2 import errorcodes
 from scrapy.mail import MailSender
 from .items import UserInfoItem, FollowItem, FanItem, \
-    PostInfoItem, TextItem, ImageItem, CommentItem, ForwardItem, ThumbupItem
+    PostItem, TextItem, ImageItem, CommentItem, ForwardItem, ThumbupItem
 
 
 
@@ -20,7 +20,7 @@ class WeibospiderPipeline(object):
         self.host = settings.get('POSTGRESQL_HOST')
         self.database = settings.get('POSTGRESQL_DATABASE')
         self.table_name_dict = settings.get('TABLE_NAME_DICT')
-       
+
         self.mail_enabled = settings.get('MAIL_ENABLED')
         if self.mail_enabled:
             self.mailer = MailSender()
@@ -30,7 +30,7 @@ class WeibospiderPipeline(object):
         self.user_info_item_count = 1
         self.follow_item_count = 1
         self.fan_item_count = 1
-        self.post_info_item_count = 1
+        self.post_item_count = 1
         self.text_item_count = 1
         self.image_item_count = 1
         self.comment_item_count = 1
@@ -77,8 +77,8 @@ class WeibospiderPipeline(object):
             )
         )
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), publish_time text);'.format(
-                self.table_name_dict['post_info']
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_list json);'.format(
+                self.table_name_dict['post']
             )
         )
         self.cursor.execute(
@@ -112,13 +112,13 @@ class WeibospiderPipeline(object):
     def close_spider(self, spider):
         self.cursor.close()
         self.connector.close()
-        
+
         if self.mail_enabled:
             self.mailer.send(
                 to = self.to_addr,
                 subject = '爬虫结束',
                 body = '共抓取 {0:d} 条微博，{1:d} 条评论，{2:d} 条转发，{3:d} 条点赞'.format(
-                    self.post_info_item_count,
+                    self.post_item_count,
                     self.comment_item_count,
                     self.forward_item_count,
                     self.thumbup_item_count
@@ -152,7 +152,6 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
-                self.close_spider(spider)
         elif isinstance(item, FollowItem):
             try:
                 statement = (
@@ -179,7 +178,6 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
-                self.close_spider(spider)
         elif isinstance(item, FanItem):
             try:
                 statement = (
@@ -206,34 +204,32 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
-                self.close_spider(spider)
-        elif isinstance(item, PostInfoItem):
+        elif isinstance(item, PostItem):
             try:
                 statement = (
-                    'INSERT INTO {0:s} (user_id, post_id, publish_time)'
-                    'VALUES (%(user_id)s, %(post_id)s, %(publish_time)s);'
-                ).format(self.table_name_dict['post_info'])
+                    'INSERT INTO {0:s} (user_id, post_list)'
+                    'VALUES (%(user_id)s, %(post_list)s);'
+                ).format(self.table_name_dict['post'])
                 self.cursor.execute(
                     statement,
                     dict(item)
                 )
                 self.connector.commit()
                 self.logger.info(
-                    'Write a post_info item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
+                    'Write a post item (user_id: {0:s}) including {1:d} posts into database. Seq: {2:d}'.format(
                         item['user_id'],
-                        item['post_id'],
-                        self.post_info_item_count
+                        item['size'],
+                        self.post_item_count
                     )
                 )
-                self.post_info_item_count += 1
+                self.post_item_count += 1
             except psycopg2.Error as e:
                 self.logger.error(
                     'Failed to insert data into table {0:s}. Returned: {1:s}'.format(
-                        self.table_name_dict['post_info'],
+                        self.table_name_dict['post'],
                         errorcodes.lookup(e.pgcode)
                     )
                 )
-                self.close_spider(spider)
         elif isinstance(item, TextItem):
             try:
                 statement = (
@@ -260,7 +256,6 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
-                self.close_spider(spider)
         elif isinstance(item, ImageItem):
             try:
                 statement = (
@@ -288,7 +283,6 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
-                self.close_spider(spider)
         elif isinstance(item, CommentItem):
             try:
                 statement = (
@@ -318,7 +312,6 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
-                self.close_spider(spider)
         elif isinstance(item, ForwardItem):
             try:
                 statement = (
@@ -346,7 +339,6 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
-                self.close_spider(spider)
         elif isinstance(item, ThumbupItem):
             try:
                 statement = (
@@ -374,6 +366,5 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
-                self.close_spider(spider)
 
         return item

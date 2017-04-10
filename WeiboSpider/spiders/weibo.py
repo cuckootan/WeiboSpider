@@ -7,7 +7,7 @@ from scrapy.spiders import CrawlSpider
 from datetime import datetime, timedelta
 
 from ..items import UserInfoItem, FollowItem, FanItem, \
-    PostInfoItem, TextItem, ImageItem, CommentItem, ForwardItem, ThumbupItem
+    PostItem, TextItem, ImageItem, CommentItem, ForwardItem, ThumbupItem
 
 
 
@@ -17,22 +17,6 @@ class WeiboSpider(CrawlSpider):
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
-
-        self.cur_fan_requests = 1
-        self.cur_follow_requests = 1
-        self.cur_post_requests = 1
-        self.cur_image_requests = 1
-        self.cur_comment_requests = 1
-        self.cur_forward_requests = 1
-        self.cur_thumbup_requests = 1
-
-        self.fan_lock = threading.Lock()
-        self.follow_lock = threading.Lock()
-        self.post_lock = threading.Lock()
-        self.image_lock = threading.Lock()
-        self.comment_lock = threading.Lock()
-        self.forward_lock = threading.Lock()
-        self.thumbup_lock = threading.Lock()
 
     def error_handler(self):
         self.close(reason = "error")
@@ -73,6 +57,14 @@ class WeiboSpider(CrawlSpider):
             fan_item['user_id'] = user_id
             fan_item['fan_list'] = []
 
+            post_item = PostItem(
+                user_id = None,
+                post_list = None,
+                size = None
+            )
+            post_item['user_id'] = user_id
+            post_item['post_list'] = []
+
             follow_start_url = 'http://weibo.cn/' + user_id + '/follow?page=1'
             # 生成关注的 Request 对象，用以爬取当前用户关注的人。
             yield scrapy.Request(
@@ -91,12 +83,12 @@ class WeiboSpider(CrawlSpider):
                 errback = self.error_handler
             )
 
-            post_info_start_url = 'http://weibo.cn/' + user_id + '?filter=1&page=1'
+            post_start_url = 'http://weibo.cn/' + user_id + '?filter=1&page=1'
             # 生成首条微博的基本信息的 Request 对象，用以爬取当前用户的首条微博及其之后的所有微博的基本信息。
             yield scrapy.Request(
-                url = post_info_start_url,
-                meta = {'user_id': user_id},
-                callback = self.parse_post_info,
+                url = post_start_url,
+                meta = {'item': post_item},
+                callback = self.parse_post,
                 errback = self.error_handler
             )
 
@@ -130,7 +122,6 @@ class WeiboSpider(CrawlSpider):
     # 递归地爬取当前用户的所有关注的人，爬取结束后返回。
     def parse_follow(self, response):
         follow_item = response.meta['item']
-        print("parse_follow")
 
         for table_selector in response.xpath('//table'):
             follow_item['follow_list'].append(table_selector.xpath('.//td[2]/a[1]/text()').extract_first())
@@ -145,22 +136,13 @@ class WeiboSpider(CrawlSpider):
                 errback = self.error_handler
             )
 
-            if not self.settings.get('MAX_FOLLOW_PAGES_PER_USER'):
+            cnt = len(follow_item['follow_list'])
+
+            if (not self.settings.get('MAX_FOLLOW_PAGES_PER_USER')) or cnt < self.settings.get('MAX_FOLLOW_PAGES_PER_USER'):
                 yield request
-            elif self.cur_follow_requests >= self.settings.get('MAX_FOLLOW_PAGES_PER_USER'):
+            else:
                 follow_item['size'] = len(follow_item['follow_list'])
                 yield follow_item
-            else:
-                self.follow_lock.acquire()
-
-                if self.cur_follow_requests < self.settings.get('MAX_FOLLOW_PAGES_PER_USER'):
-                    self.cur_follow_requests += 1
-                    self.follow_lock.release()
-                    yield request
-                else:
-                    self.follow_lock.release()
-                    follow_item['size'] = len(follow_item['follow_list'])
-                    yield follow_item
         # 否则，返回当前用户的所有的关注的人。
         else:
             follow_item['size'] = len(follow_item['follow_list'])
@@ -184,38 +166,26 @@ class WeiboSpider(CrawlSpider):
                 errback = self.error_handler
             )
 
-            if not self.settings.get('MAX_FAN_PAGES_PER_USER'):
+            cnt = len(fan_item['fan_list'])
+
+            if (not self.settings.get('MAX_FAN_PAGES_PER_USER')) or cnt < self.settings.get('MAX_FAN_PAGES_PER_USER'):
                 yield request
-            elif self.cur_fan_requests >= self.settings.get('MAX_FAN_PAGES_PER_USER'):
+            else:
                 fan_item['size'] = len(fan_item['fan_list'])
                 yield fan_item
-            else:
-                self.fan_lock.acquire()
-
-                if self.cur_fan_requests < self.settings.get('MAX_FAN_PAGES_PER_USER'):
-                    self.cur_fan_requests += 1
-                    self.fan_lock.release()
-                    yield request
-                else:
-                    self.fan_lock.release()
-                    fan_item['size'] = len(fan_item['fan_list'])
-                    yield fan_item
         # 否则，返回当前用户的所有粉丝。
         else:
             fan_item['size'] = len(fan_item['fan_list'])
             yield fan_item
 
     # 爬取当前用户的所有微博的基本信息以及文本。对于每一条微博，爬取完基本信息后以及文本后，返回这两者，然后生成这条微博相关的第一张图片，第一页评论, 第一页转发的 Request 对象。
-    def parse_post_info(self, response):
+    def parse_post(self, response):
+        post_item = response.meta['item']
+
         for div_selector in response.xpath('//div[@class = "c" and @id and div]'):
-            # post_info_item 的结构为: {'user_id': xxx, 'post_id': xxx, 'publish_time': xxx}。
-            post_info_item = PostInfoItem(
-                user_id = None,
-                post_id = None,
-                publish_time = None
-            )
-            post_info_item['user_id'] = response.meta['user_id']
-            post_info_item['post_id'] = div_selector.xpath('@id').extract_first()
+            user_id = post_item['user_id']
+            post_id = div_selector.xpath('@id').extract_first()
+            publish_time = None
 
             # text_item 的结构体为: {'user_id': xxx, 'post_id': xxx, 'text': xxx}
             text_item = TextItem(
@@ -223,13 +193,15 @@ class WeiboSpider(CrawlSpider):
                 post_id = None,
                 text = None
             )
-            text_item['user_id'] = post_info_item['user_id']
-            text_item['post_id'] = post_info_item['post_id']
+            text_item['user_id'] = user_id
+            text_item['post_id'] = post_id
             text_item['text'] = div_selector.xpath('div[1]/span[@class = "ctt"]/text()').extract_first()
+            # 返回当前用户的当前微博的文本.
+            yield text_item
 
             # 如果存在图像。
             if div_selector.xpath('div[2]'):
-                post_info_item['publish_time'] = div_selector.xpath('div[2]/span[@class = "ct"]/text()').extract_first()
+                publish_time = div_selector.xpath('div[2]/span[@class = "ct"]/text()').extract_first()
                 image_start_url = div_selector.xpath('div[2]/a[1]/@href').extract_first()
 
                 for a_selector in div_selector.xpath('div[2]/a'):
@@ -246,7 +218,7 @@ class WeiboSpider(CrawlSpider):
                     elif temp_str[:2] == '评论':
                         comment_start_url = a_selector.xpath('@href').extract_first()
             else:
-                post_info_item['publish_time'] = div_selector.xpath('div[1]/span[@class="ct"]/text()').extract_first()
+                publish_time = div_selector.xpath('div[1]/span[@class="ct"]/text()').extract_first()
                 image_start_url = None
 
                 for a_selector in div_selector.xpath('div[1]/a'):
@@ -259,28 +231,28 @@ class WeiboSpider(CrawlSpider):
                     elif temp_str[:2] == '评论':
                         comment_start_url = a_selector.xpath('@href').extract_first()
 
-            publish_time = re.split('来自', post_info_item['publish_time'])[0].strip()
-            post_info_item['publish_time'] = str(self.handle_time(self.get_time(response.headers['date']), publish_time))
+            publish_time = re.split('来自', publish_time)[0].strip()
+            publish_time = str(self.handle_time(self.get_time(response.headers['date']), publish_time))
+            post_item['post_list'].append({
+                'post_id': post_id,
+                'publish_time': publish_time
+            })
 
-            # 返回当前用户的当前微博的基本信息以及文本。
-            yield post_info_item
-            yield text_item
-
-            # comment_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'comment_list': [json.dumps({'comment_user': 1th_user, 'comment_text': 1th_text, 'comment_time': 1th_time}), json.dumps({'comment_user': 2nd_user, 'comment_text': 2nd_text, 'comment_time': 2nd_time}), ...]}。
+            # comment_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'comment_list': [json.dumps({'comment_user': 1th_user, 'comment_text': 1th_text, 'comment_time': 1th_time}), json.dumps({'comment_user': 2nd_user, 'comment_text': 2nd_text, 'comment_time': 2nd_time}), ...]}.
             comment_item = CommentItem(
                 user_id = None,
                 post_id = None,
                 comment_list = None,
                 size = None
             )
-            # forward_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'forward_list': [json.dumps({'forward_user': 1th_user, 'forward_time': 1th_time}), json.dumps({'forward_user': 2nd_user, 'forward_time': 2nd_time}), ...]}。
+            # forward_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'forward_list': [json.dumps({'forward_user': 1th_user, 'forward_time': 1th_time}), json.dumps({'forward_user': 2nd_user, 'forward_time': 2nd_time}), ...]}.
             forward_item = ForwardItem(
                 user_id = None,
                 post_id = None,
                 forward_list = None,
                 size = None
             )
-            # thumbup_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'thumbup_list': [json.dumps({'thumbup_user': 1th_user, 'thumbup_time': 1th_time}), json.dumps({'thumbup_user': 2nd_user, 'thumbup_time': 2nd_time}), ...]}。
+            # thumbup_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'thumbup_list': [json.dumps({'thumbup_user': 1th_user, 'thumbup_time': 1th_time}), json.dumps({'thumbup_user': 2nd_user, 'thumbup_time': 2nd_time}), ...]}.
             thumbup_item = ThumbupItem(
                 user_id = None,
                 post_id = None,
@@ -288,14 +260,14 @@ class WeiboSpider(CrawlSpider):
                 size = None
             )
 
-            comment_item['user_id'] = post_info_item['user_id']
-            comment_item['post_id'] = post_info_item['post_id']
+            comment_item['user_id'] = user_id
+            comment_item['post_id'] = post_id
             comment_item['comment_list'] = []
-            forward_item['user_id'] = post_info_item['user_id']
-            forward_item['post_id'] = post_info_item['post_id']
+            forward_item['user_id'] = user_id
+            forward_item['post_id'] = post_id
             forward_item['forward_list'] = []
-            thumbup_item['user_id'] = post_info_item['user_id']
-            thumbup_item['post_id'] = post_info_item['post_id']
+            thumbup_item['user_id'] = user_id
+            thumbup_item['post_id'] = post_id
             thumbup_item['thumbup_list'] = []
 
             # 如果存在图片，则生成这条微博的第一张图片的 Request 对象。
@@ -308,8 +280,8 @@ class WeiboSpider(CrawlSpider):
                     size = None
                 )
 
-                image_item['user_id'] = post_info_item['user_id']
-                image_item['post_id'] = post_info_item['post_id']
+                image_item['user_id'] = user_id
+                image_item['post_id'] = post_id
                 image_item['image_list'] = []
 
                 yield scrapy.Request(
@@ -352,22 +324,23 @@ class WeiboSpider(CrawlSpider):
                        + response.xpath('//div[@id = "pagelist" and @class = "pa"]//a[contains(text(), "下页")]/@href').extract_first()
             request = scrapy.Request(
                 url = next_url,
-                meta = {'user_id': response.meta['user_id']},
-                callback = self.parse_post_info,
+                meta = {'item': post_item},
+                callback = self.parse_post,
                 errback = self.error_handler
             )
 
-            if not self.settings.get('MAX_POST_PAGES_PER_USER'):
-                yield request
-            elif self.cur_post_requests < self.settings.get('MAX_POST_PAGES_PER_USER'):
-                self.post_lock.acquire()
+            cnt = len(post_item['post_list'])
 
-                if self.cur_post_requests < self.settings.get('MAX_POST_PAGES_PER_USER'):
-                    self.cur_post_requests += 1
-                    self.post_lock.release()
-                    yield request
-                else:
-                    self.post_lock.release()
+            if (not self.settings.get('MAX_POST_PAGES_PER_USER')) or cnt < self.settings.get('MAX_POST_PAGES_PER_USER'):
+                yield request
+            else:
+                post_item['size'] = len(post_item['post_list'])
+                post_item['post_list'] = json.dumps(post_item['post_list'])
+                yield post_item
+        else:
+            post_item['size'] = len(post_item['post_list'])
+            post_item['post_list'] = json.dumps(post_item['post_list'])
+            yield post_item
 
     def get_time(self, post_time):
         return datetime.strptime(post_time.decode('utf-8'), '%a, %d %b %Y %H:%M:%S %Z')
@@ -428,22 +401,13 @@ class WeiboSpider(CrawlSpider):
                 errback = self.error_handler
             )
 
-            if not self.settings.get('MAX_IMAGE_PAGES_PER_POST'):
+            cnt = len(image_item['image_list'])
+
+            if (not self.settings.get('MAX_IMAGE_PAGES_PER_POST')) or cnt < self.settings.get('MAX_IMAGE_PAGES_PER_POST'):
                 yield request
-            elif self.cur_image_requests >= self.settings.get('MAX_IMAGE_PAGES_PER_POST'):
+            else:
                 image_item['size'] = len(image_item['image_list'])
                 yield image_item
-            else:
-                self.image_lock.acquire()
-
-                if self.cur_image_requests < self.settings.get('MAX_IMAGE_PAGES_PER_POST'):
-                    self.cur_image_requests += 1
-                    self.image_lock.release()
-                    yield request
-                else:
-                    self.image_lock.release()
-                    image_item['size'] = len(image_item['image_list'])
-                    yield image_item
         # 否则，返回这条微博的所有图像。
         else:
             image_item['size'] = len(image_item['image_list'])
@@ -481,24 +445,14 @@ class WeiboSpider(CrawlSpider):
                 errback = self.error_handler
             )
 
-            if not self.settings.get('MAX_COMMENT_PAGES_PER_POST'):
+            cnt = len(comment_item['comment_list'])
+
+            if (not self.settings.get('MAX_COMMENT_PAGES_PER_POST')) or cnt < self.settings.get('MAX_COMMENT_PAGES_PER_POST'):
                 yield request
-            elif self.cur_comment_requests >= self.settings.get('MAX_COMMENT_PAGES_PER_POST'):
+            else:
                 comment_item['size'] = len(comment_item['comment_list'])
                 comment_item['comment_list'] = json.dumps(comment_item['comment_list'])
                 yield comment_item
-            else:
-                self.comment_lock.acquire()
-
-                if self.cur_comment_requests < self.settings.get('MAX_COMMENT_PAGES_PER_POST'):
-                    self.cur_comment_requests += 1
-                    self.comment_lock.release()
-                    yield request
-                else:
-                    self.comment_lock.release()
-                    comment_item['size'] = len(comment_item['comment_list'])
-                    comment_item['comment_list'] = json.dumps(comment_item['comment_list'])
-                    yield comment_item
         # 否则，返回这条微博的所有评论。
         else:
             comment_item['size'] = len(comment_item['comment_list'])
@@ -532,26 +486,15 @@ class WeiboSpider(CrawlSpider):
                 errback = self.error_handler
             )
 
-            if not self.settings.get('MAX_FORWARD_PAGES_PER_POST'):
+            cnt = len(forward_item['forward_list'])
+
+            if (not self.settings.get('MAX_FORWARD_PAGES_PER_POST')) or cnt < self.settings.get('MAX_FORWARD_PAGES_PER_POST'):
                 yield request
-            elif self.cur_forward_requests >= self.settings.get('MAX_FORWARD_PAGES_PER_POST'):
+            else:
                 forward_item['size'] = len(forward_item['forward_list'])
                 forward_item['forward_list'] = json.dumps(forward_item['forward_list'])
                 yield forward_item
-            else:
-                self.forward_lock.acquire()
-
-                if self.cur_forward_requests < self.settings.get('MAX_FORWARD_PAGES_PER_POST'):
-                    self.cur_forward_requests += 1
-                    self.forward_lock.release()
-                    yield request
-                else:
-                    self.forward_lock.release()
-                    forward_item['size'] = len(forward_item['forward_list'])
-                    forward_item['forward_list'] = json.dumps(forward_item['forward_list'])
-                    yield forward_item
-
-        # 否则，返回这条微博的所有的转发内容，然后生成第一页点赞的 Request 对象。之所以不在 parse_post_info 里生成，是因为其中返回的 response 里没有正确的点赞 url（其中的 url 请求后相当于是点赞）。
+        # 否则，返回这条微博的所有的转发内容，然后生成第一页点赞的 Request 对象。之所以不在 parse_post 里生成，是因为其中返回的 response 里没有正确的点赞 url（其中的 url 请求后相当于是点赞）。
         else:
             forward_item['size'] = len(forward_item['forward_list'])
             forward_item['forward_list'] = json.dumps(forward_item['forward_list'])
@@ -584,24 +527,14 @@ class WeiboSpider(CrawlSpider):
                 errback = self.error_handler
             )
 
-            if not self.settings.get('MAX_THUMBUP_PAGES_PER_POST'):
+            cnt = len(thumbup_item['thumbup_list'])
+
+            if (not self.settings.get('MAX_THUMBUP_PAGES_PER_POST')) or cnt < self.settings.get('MAX_THUMBUP_PAGES_PER_POST'):
                 yield request
-            elif self.cur_thumbup_requests >= self.settings.get('MAX_THUMBUP_PAGES_PER_POST'):
+            else:
                 thumbup_item['size'] = len(thumbup_item['thumbup_list'])
                 thumbup_item['thumbup_list'] = json.dumps(thumbup_item['thumbup_list'])
                 yield thumbup_item
-            else:
-                self.thumbup_lock.acquire()
-
-                if self.cur_thumbup_requests < self.settings.get('MAX_THUMBUP_PAGES_PER_POST'):
-                    self.cur_thumbup_requests += 1
-                    self.thumbup_lock.release()
-                    yield request
-                else:
-                    self.thumbup_lock.release()
-                    thumbup_item['size'] = len(thumbup_item['thumbup_list'])
-                    thumbup_item['thumbup_list'] = json.dumps(thumbup_item['thumbup_list'])
-                    yield thumbup_item
         # 否则，返回该条微博的所有点赞信息。
         else:
             thumbup_item['size'] = len(thumbup_item['thumbup_list'])

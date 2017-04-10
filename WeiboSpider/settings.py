@@ -159,17 +159,17 @@ REQUEST_CUSTOM_COOKIE_LIST = [
 # Your whole weibo username and password pairs.
 # WEIBO_LOGIN_INFO_LIST = [('your username_1', 'your password_1'), ('your username_2', 'your password_2'), ...]
 
-# Each name of tables can be defined here (each value of items). These keys are not changeable.
+# Each name of tables can be defined here (each value of items). These keys can not to be changed.
 TABLE_NAME_DICT = {
-    'user_info': 'user_info_table_name',
-    'follow': 'follow_table_name',
-    'fan': 'fan_table_name',
-    'post_info': 'post_info_table_name',
-    'text': 'text_table_name',
-    'image': 'image_table_name',
-    'comment': 'comment_table_name',
-    'forward': 'forward_table_name',
-    'thumbup': 'thumbup_table_name'
+    'user_info': 'user_info',
+    'follow': 'follow',
+    'fan': 'fan',
+    'post': 'post',
+    'text': 'text',
+    'image': 'image',
+    'comment': 'comment',
+    'forward': 'forward',
+    'thumbup': 'thumbup'
 }
 
 # Maximum follow pages(requests) crawled for per user.

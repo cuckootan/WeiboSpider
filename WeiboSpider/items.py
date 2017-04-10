@@ -31,12 +31,11 @@ class FanItem(scrapy.Item):
     fan_list = scrapy.Field()
     size = scrapy.Field()
 
-class PostInfoItem(scrapy.Item):
+class PostItem(scrapy.Item):
     user_id = scrapy.Field()
-    # 微博ID.
-    post_id = scrapy.Field()
-    # 作者发布时间.
-    publish_time = scrapy.Field()
+    # 所有微博.
+    post_list = scrapy.Field()
+    size = scrapy.Field()
 
 class TextItem(scrapy.Item):
     user_id = scrapy.Field()
