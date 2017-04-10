@@ -46,7 +46,7 @@
     `sudo apt-get install libxml2-dev libxslt1-dev libffi-dev libssl-dev`
 
     `sudo python3 -m pip install -U scrapy`
-    
+
     `sudo apt-get install libpq-dev`
 
     `sudo python3 -m pip install -U psycopg2`
@@ -69,22 +69,22 @@
 
 ## 4 配置说明
 
-1.  选用 Pycharm 作为开发及调试工具；
-    
+1.  选用 Pycharm 作为开发及调试工具。
+
     打开 **Run -> Edit Configurations**，点击左上角的 **+** 添加配置信息。
-    
+
     -   将 **Script** 字段填写为 **/usr/local/bin/scrapy**；
     -   将 **Script parameters** 字段填写为 **crawl weibo**；
     -   将 **Python interpreter** 字段填写为 python3 解释器的路径；
     -   将 **Working directory** 字段填写为该项目的根目录的路径。比如：**/home/username/Project/WeiboSpider**；
     -   取消 **Add content roots to PYTHONPATH** 以及 **Add source roots to PYTHONPATH**。
-2.   配置 PostgreSQL 并建立数据库。打开 **/etc/postgresql/9.5/main/pg_hba.conf**，添加如下字段到更改用户权限的相应位置。
+2.   配置 PostgreSQL 并建立数据库。打开 **/etc/postgresql/9.5/main/pg\_hba.conf**，添加如下字段到更改用户权限的相应位置。
 
-    **local    all    your_username    trust**
+    **local    all    your\_username    trust**
 
     或者
 
-    **local    all    your_username    md5**
+    **local    all    your\_username    md5**
 3.  程序中用到的所有配置都写在了项目中的 **settings.py** 里，因此将项目下载到本地后，只需配置更改其中的相应内容即可，无序修改其他源程序。
     主要包括：
 
@@ -227,16 +227,16 @@
     ```
 
     其中，各个表的所有列的字段及数据类型分别为（它们不能被改变，表名可以改变）：
-    
-    -   user_info 对应表的结构为： **(user_id varchar(20), user_name text, gender varchar(5), district text)**
-    -   follow 对应表的结构为： **(user_id varchar(20), follow_list text[])**
-    -   fan 对应表的结构为： **(user_id varchar(20), fan_list text[])**
-    -   post_info 对应表的结构为： **(user_id varchar(20), post_id varchar(20), publist_time text)**
-    -   text 对应表的结构为： **(user_id varchar(20), post_id varchar(20), text text)**
-    -   image 对应表的结构为： **(user_id varchar(20), post_id varchar(20), image_list text[])**
-    -   comment 对应表的结构为： **(user_id varchar(20), post_id varchar(20), comment_list json)**
-    -   forward 对应表的结构为： **(user_id varchar(20), post_id varchar(20), forward_list json)**
-    -   thumbup 对应表的结构为： **(user_id varchar(20), post_id varchar(20), thumbup_list json)**
+
+    -   user\_info 对应表的结构为： **(user\_id varchar(20), user\_name text, gender varchar(5), district text)**
+    -   follow 对应表的结构为： **(user\_id varchar(20), follow\_list text[])**
+    -   fan 对应表的结构为： **(user\_id varchar(20), fan\_list text[])**
+    -   post\_info 对应表的结构为： **(user\_id varchar(20), post\_id varchar(20), publist\_time text)**
+    -   text 对应表的结构为： **(user\_id varchar(20), post\_id varchar(20), text text)**
+    -   image 对应表的结构为： **(user\_id varchar(20), post\_id varchar(20), image\_list text[])**
+    -   comment 对应表的结构为： **(user\_id varchar(20), post\_id varchar(20), comment\_list json)**
+    -   forward 对应表的结构为： **(user\_id varchar(20), post\_id varchar(20), forward\_list json)**
+    -   thumbup 对应表的结构为： **(user\_id varchar(20), post\_id varchar(20), thumbup\_list json)**
 
     还有一些其他配置项，详见 settings.py。
 
