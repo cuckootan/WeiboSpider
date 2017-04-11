@@ -62,47 +62,47 @@ class WeibospiderPipeline(object):
 
         # 如果表不存在，则首先建表。
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), user_name text, gender varchar(5), district text);'.format(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, user_name text NOT NULL, gender varchar(5) NOT NULL, district text NOT NULL);'.format(
                 self.table_name_dict['user_info']
             )
         )
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), follow_list text[]);'.format(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, follow_list text[] NOT NULL);'.format(
                 self.table_name_dict['follow']
             )
         )
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), fan_list text[]);'.format(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, fan_list text[] NOT NULL);'.format(
                 self.table_name_dict['fan']
             )
         )
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_list json);'.format(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_list json NOT NULL);'.format(
                 self.table_name_dict['post']
             )
         )
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), text text);'.format(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, text text NOT NULL);'.format(
                 self.table_name_dict['text']
             )
         )
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), image_list text[]);'.format(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, image_list text[] NOT NULL);'.format(
                 self.table_name_dict['image']
             )
         )
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), comment_list json);'.format(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, comment_list json NOT NULL);'.format(
                 self.table_name_dict['comment']
             )
         )
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), forward_list json);'.format(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, forward_list json NOT NULL);'.format(
                 self.table_name_dict['forward']
             )
         )
         self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20), post_id varchar(20), thumbup_list json);'.format(
+            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, thumbup_list json NOT NULL);'.format(
                 self.table_name_dict['thumbup']
             )
         )

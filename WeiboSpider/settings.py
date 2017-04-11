@@ -21,7 +21,7 @@ NEWSPIDER_MODULE = 'WeiboSpider.spiders'
 # Obey robots.txt rules
 #ROBOTSTXT_OBEY = True
 
-CONCURRENT_ITEMS = 50
+CONCURRENT_ITEMS = 20
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 CONCURRENT_REQUESTS = 4
@@ -78,7 +78,9 @@ ITEM_PIPELINES = {
     'WeiboSpider.pipelines.WeibospiderPipeline': 300
 }
 
-LOG_LEVEL = 'DEBUG'
+LOG_LEVEL = 'INFO'
+
+REDIRECT_ENABLED = False
 
 # Default queue is LIFO, here uses FIFO.
 DEPTH_PRIORITY = 1

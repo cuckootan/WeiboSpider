@@ -18,8 +18,8 @@ class WeiboSpider(CrawlSpider):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
 
-    def error_handler(self):
-        self.close(reason = "error")
+    def error_handler(self, failure):
+        self.logger.error(repr(failure))
 
     def start_requests(self):
         self.logger.info('start...')
@@ -116,7 +116,7 @@ class WeiboSpider(CrawlSpider):
             elif temp[0] == '地区':
                 user_info_item['district'] = temp[1]
 
-        # 爬取当前用户的个人信息结束，返回。
+        self.logger.info('user_id: {0:s}. Its user_info has been crawled.'.format(user_info_item['user_id']))
         yield user_info_item
 
     # 递归地爬取当前用户的所有关注的人，爬取结束后返回。
@@ -127,9 +127,13 @@ class WeiboSpider(CrawlSpider):
             follow_item['follow_list'].append(table_selector.xpath('.//td[2]/a[1]/text()').extract_first())
 
             cnt = len(follow_item['follow_list'])
-            if self.settings.get('MAX_FOLLOW_COUNTS_PER_USER') and cnt >= self.settings.get('MAX_FOLLOW_COUNTS_PER_USER'):
+            self.logger.info('user_id: {0:s}, follower seq: {1:d}'.format(follow_item['user_id'], cnt))
+
+            if self.settings.get('MAX_FOLLOW_COUNTS_PER_USER') and cnt >= int(self.settings.get('MAX_FOLLOW_COUNTS_PER_USER')):
                 follow_item['size'] = cnt
-                return follow_item
+                self.logger.info('user_id: {0:s}. All the followers have been crawled.'.format(follow_item['user_id']))
+                yield follow_item
+                return
 
         # 如果后面还有，则生成下一页关注人的 Request 对象。
         if response.xpath('//div[@id = "pagelist"]//a[contains(text(), "下页")]'):
@@ -144,6 +148,7 @@ class WeiboSpider(CrawlSpider):
         # 否则，返回当前用户的所有的关注的人。
         else:
             follow_item['size'] = len(follow_item['follow_list'])
+            self.logger.info('user_id: {0:s}. All the followers have been crawled.'.format(follow_item['user_id']))
             yield follow_item
 
     # 递归地爬取当前用户的所有粉丝，爬取结束后返回。
@@ -155,9 +160,13 @@ class WeiboSpider(CrawlSpider):
             fan_item['fan_list'].append(table_selector.xpath('.//td[2]/a[1]/text()').extract_first())
 
             cnt = len(fan_item['fan_list'])
-            if self.settings.get('MAX_FAN_COUNTS_PER_USER') and cnt >= self.settings.get('MAX_FAN_COUNTS_PER_USER'):
+            self.logger.info('user_id: {0:s}, fan seq: {1:d}'.format(fan_item['user_id'], cnt))
+
+            if self.settings.get('MAX_FAN_COUNTS_PER_USER') and cnt >= int(self.settings.get('MAX_FAN_COUNTS_PER_USER')):
                 fan_item['size'] = cnt
-                return fan_item
+                self.logger.info('user_id: {0:s}. All the fans have been crawled.'.format(fan_item['user_id']))
+                yield fan_item
+                return
 
         # 如果后面还有，则生成下一页粉丝的 Request 对象。
         if response.xpath('//div[@id = "pagelist"]//a[contains(text(), "下页")]'):
@@ -172,6 +181,7 @@ class WeiboSpider(CrawlSpider):
         # 否则，返回当前用户的所有粉丝。
         else:
             fan_item['size'] = len(fan_item['fan_list'])
+            self.logger.info('user_id: {0:s}. All the fans have been crawled.'.format(fan_item['user_id']))
             yield fan_item
 
     # 爬取当前用户的所有微博的基本信息以及文本。对于每一条微博，爬取完基本信息后以及文本后，返回这两者，然后生成这条微博相关的第一张图片，第一页评论, 第一页转发的 Request 对象。
@@ -296,7 +306,6 @@ class WeiboSpider(CrawlSpider):
                 callback = self.parse_comment,
                 errback = self.error_handler
             )
-
             # 生成这条微博的第一页转发的 Request 对象。
             yield scrapy.Request(
                 url = forward_start_url,
@@ -315,10 +324,14 @@ class WeiboSpider(CrawlSpider):
             )
 
             cnt = len(post_item['post_list'])
-            if self.settings.get('MAX_POST_COUNTS_PER_USER') and cnt >= self.settings.get('MAX_POST_COUNTS_PER_USER'):
+            self.logger.info('user_id: {0:s}, post seq: {1:d}'.format(post_item['user_id'], cnt))
+
+            if self.settings.get('MAX_POST_COUNTS_PER_USER') and cnt >= int(self.settings.get('MAX_POST_COUNTS_PER_USER')):
                 post_item['size'] = cnt
                 post_item['post_list'] = json.dumps(post_item['post_list'])
-                return post_item
+                self.logger.info('user_id: {0:s}. All the posts have been crawled.'.format(post_item['user_id']))
+                yield post_item
+                return
 
         # 如果当前用户还存在其他微博，则继续爬取它们的基本信息以及文本。由于每条微博是一个 Item，在爬取每一条微博的基本信息和文本后就会返回，因此当后面不存在微博时，不需要另作返回。
         if response.xpath('//div[@id = "pagelist" and @class = "pa"]//a[contains(text(), "下页")]/@href'):
@@ -334,6 +347,7 @@ class WeiboSpider(CrawlSpider):
         else:
             post_item['size'] = len(post_item['post_list'])
             post_item['post_list'] = json.dumps(post_item['post_list'])
+            self.logger.info('user_id: {0:s}. All the posts have been crawled.'.format(post_item['user_id']))
             yield post_item
 
     def get_time(self, post_time):
@@ -379,15 +393,22 @@ class WeiboSpider(CrawlSpider):
         div_selector = response.xpath('//div[@class = "c" and img]')
         if div_selector:
             image_item['image_list'].append(div_selector[0].xpath('img/@src').extract_first())
-            return image_item
+            image_item['size'] = len(image_item['image_list'])
+            self.logger.info('user_id: {0:s}, post_id: {1:s}. All the images have been crawled.'.format(image_item['user_id'], image_item['post_id']))
+            yield image_item
+            return
 
         div_selector = response.xpath('//div[@class = "c" and div[@class = "tc"]]')
         image_item['image_list'].append(div_selector[0].xpath('a/img/@src').extract_first())
 
         cnt = len(image_item['image_list'])
-        if self.settings.get('MAX_IMAGE_COUNTS_PER_POST') and cnt >= self.settings.get('MAX_IMAGE_COUNTS_PER_POST'):
+        self.logger.info('user_id: {0:s}, post_id: {1:s}, image seq: {2:d}'.format(image_item['user_id'], image_item['post_id'], cnt))
+
+        if self.settings.get('MAX_IMAGE_COUNTS_PER_POST') and cnt >= int(self.settings.get('MAX_IMAGE_COUNTS_PER_POST')):
             image_item['size'] = cnt
-            return image_item
+            self.logger.info('user_id: {0:s}, post_id: {1:s}. All the images have been crawled.'.format(image_item['user_id'], image_item['post_id']))
+            yield image_item
+            return
 
         # 如果后面还存在其他图片，则生成下一张图片的 Request 对象。
         if div_selector[0].xpath('div[@class = "tc"][2]/a[contains(text(), "下一张")]'):
@@ -403,6 +424,7 @@ class WeiboSpider(CrawlSpider):
         # 否则，返回这条微博的所有图像。
         else:
             image_item['size'] = len(image_item['image_list'])
+            self.logger.info('user_id: {0:s}, post_id: {1:s}. All the images have been crawled.'.format(image_item['user_id'], image_item['post_id']))
             yield image_item
 
     # 递归地爬取某条微博的所有评论，爬去结束后返回。
@@ -426,10 +448,14 @@ class WeiboSpider(CrawlSpider):
             })
 
             cnt = len(comment_item['comment_list'])
-            if self.settings.get('MAX_COMMENT_COUNTS_PER_POST') and cnt >= self.settings.get('MAX_COMMENT_COUNTS_PER_POST'):
+            self.logger.info('user_id: {0:s}, post_id: {1:s}, comment seq: {2:d}'.format(comment_item['user_id'], comment_item['post_id'], cnt))
+
+            if self.settings.get('MAX_COMMENT_COUNTS_PER_POST') and cnt >= int(self.settings.get('MAX_COMMENT_COUNTS_PER_POST')):
                 comment_item['size'] = cnt
                 comment_item['comment_list'] = json.dumps(comment_item['comment_list'])
-                return comment_item
+                self.logger.info('user_id: {0:s}, post_id: {1:s}. All the comments have been crawled.'.format(comment_item['user_id'], comment_item['post_id']))
+                yield comment_item
+                return
 
         # 如果后面还存在着其他评论，则生成下一页评论的 Request 对象。
         if response.xpath('//div[@class = "pa" and @id = "pagelist"]//a[contains(text(), "下页")]'):
@@ -447,6 +473,7 @@ class WeiboSpider(CrawlSpider):
         else:
             comment_item['size'] = len(comment_item['comment_list'])
             comment_item['comment_list'] = json.dumps(comment_item['comment_list'])
+            self.logger.info('user_id: {0:s}, post_id: {1:s}. All the comments have been crawled.'.format(comment_item['user_id'], comment_item['post_id']))
             yield comment_item
 
     # 递归地爬取某条微博的所有的转发，爬取结束后返回。
@@ -465,10 +492,14 @@ class WeiboSpider(CrawlSpider):
                 })
 
                 cnt = len(forward_item['forward_list'])
-                if self.settings.get('MAX_FORWARD_COUNTS_PER_POST') and cnt >= self.settings.get('MAX_FORWARD_COUNTS_PER_POST'):
+                self.logger.info('user_id: {0:s}, post_id: {1:s}, forward seq: {2:d}'.format(forward_item['user_id'], forward_item['post_id'], cnt))
+
+                if self.settings.get('MAX_FORWARD_COUNTS_PER_POST') and cnt >= int(self.settings.get('MAX_FORWARD_COUNTS_PER_POST')):
                     forward_item['size'] = cnt
                     forward_item['forward_list'] = json.dumps(forward_item['forward_list'])
-                    return forward_item
+                    self.logger.info('user_id: {0:s}, post_id: {1:s}. All the forwards have been crawled.'.format(forward_item['user_id'], forward_item['post_id']))
+                    yield forward_item
+                    return
 
         # 如果后面还存在着其他转发，则生成下一页转发的 Request 对象。
         if response.xpath('//div[@class = "pa" and @id = "pagelist"]//a[contains(text(), "下页")]'):
@@ -486,6 +517,7 @@ class WeiboSpider(CrawlSpider):
         else:
             forward_item['size'] = len(forward_item['forward_list'])
             forward_item['forward_list'] = json.dumps(forward_item['forward_list'])
+            self.logger.info('user_id: {0:s}, post_id: {1:s}. All the forwards have been crawled.'.format(forward_item['user_id'], forward_item['post_id']))
             yield forward_item
 
     # 爬取某条微博的所有点赞信息，爬取结束后返回。
@@ -504,10 +536,14 @@ class WeiboSpider(CrawlSpider):
                 })
 
                 cnt = len(thumbup_item['thumbup_list'])
-                if self.settings.get('MAX_THUMBUP_COUNTS_PER_POST') and cnt >= self.settings.get('MAX_THUMBUP_COUNTS_PER_POST'):
+                self.logger.info('user_id: {0:s}, post_id: {1:s}, thumbup seq: {2:d}'.format(thumbup_item['user_id'], thumbup_item['post_id'], cnt))
+
+                if self.settings.get('MAX_THUMBUP_COUNTS_PER_POST') and cnt >= int(self.settings.get('MAX_THUMBUP_COUNTS_PER_POST')):
                     thumbup_item['size'] = cnt
                     thumbup_item['thumbup_list'] = json.dumps(thumbup_item['thumbup_list'])
-                    return thumbup_item
+                    self.logger.info('user_id: {0:s}, post_id: {1:s}. All the thumbups have been crawled.'.format(thumbup_item['user_id'], thumbup_item['post_id']))
+                    yield thumbup_item
+                    return
 
         # 如果后面还存在着其他点赞，则生成下一页点赞的 Request 对象。
         if response.xpath('//div[@class = "pa" and @id = "pagelist"]//a[contains(text(), "下页")]'):
@@ -525,4 +561,5 @@ class WeiboSpider(CrawlSpider):
         else:
             thumbup_item['size'] = len(thumbup_item['thumbup_list'])
             thumbup_item['thumbup_list'] = json.dumps(thumbup_item['thumbup_list'])
+            self.logger.info('user_id: {0:s}, post_id: {1:s}. All the thumbups have been crawled.'.format(thumbup_item['user_id'], thumbup_item['post_id']))
             yield thumbup_item

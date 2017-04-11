@@ -79,16 +79,18 @@
     -   将 **Working directory** 字段填写为该项目的根目录的路径。比如：**/home/username/Project/WeiboSpider**；
     -   取消 **Add content roots to PYTHONPATH** 以及 **Add source roots to PYTHONPATH**。
 2.   配置 PostgreSQL 并建立数据库。打开 **/etc/postgresql/9.5/main/pg\_hba.conf**，添加如下字段到更改用户权限的相应位置。
-    
-    **local    all    your\_username    trust**
 
+    ```Shell
+    local    all    your\_username    trust
+    
     或者
     
-    **local    all    your\_username    md5**
+    local    all    your\_username    md5
+    ```
 3.  程序中用到的所有配置都写在了项目中的 **settings.py** 里，因此将项目下载到本地后，只需配置更改其中的相应内容即可，无序修改其他源程序。
     主要包括：
 
-    ```python
+    ```Python
         # Enable or disable downloader middlewares
         # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
         # Use my own cookie middleware.
@@ -169,15 +171,15 @@
 
         # Each name of tables can be defined here (each value of items). These keys are not changeable.
         TABLE_NAME_DICT = {
-            'user_info': 'user_info_table_name',
-            'follow': 'follow_table_name',
-            'fan': 'fan_table_name',
-            'post_info': 'post_info_table_name',
-            'text': 'text_table_name',
-            'image': 'image_table_name',
-            'comment': 'comment_table_name',
-            'forward': 'forward_table_name',
-            'thumbup': 'thumbup_table_name'
+            'user_info': 'user_info',
+            'follow': 'follow',
+            'fan': 'fan',
+            'post': 'post',
+            'text': 'text',
+            'image': 'image',
+            'comment': 'comment',
+            'forward': 'forward',
+            'thumbup': 'thumbup'
         }
 
         # Maximum follow pages(requests) crawled for per user.
