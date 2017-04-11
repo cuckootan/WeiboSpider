@@ -82,9 +82,9 @@
 
     ```Shell
     local    all    your\_username    trust
-    
+
     或者
-    
+
     local    all    your\_username    md5
     ```
 3.  程序中用到的所有配置都写在了项目中的 **settings.py** 里，因此将项目下载到本地后，只需配置更改其中的相应内容即可，无序修改其他源程序。

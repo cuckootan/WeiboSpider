@@ -182,19 +182,19 @@ MAX_FOLLOW_COUNTS_PER_USER = 50
 MAX_FAN_COUNTS_PER_USER = 50
 # Maximum post counts(requests) crawled for per user. And the maximum text counts crawled in per post also equal to it.
 # It must be a positive number or None. None implys that crawling all posts.
-MAX_POST_COUNTS_PER_USER = 15
+MAX_POST_COUNTS_PER_USER = 20
 # Maximum image counts(requests) crawled in per post.
 # It must be a positive number or None. None implys that crawling all images.
 MAX_IMAGE_COUNTS_PER_POST = None
 # Maximum comment counts(requests) crawled in per post.
 # It must be a positive number or None. None implys that crawling all comments.
-MAX_COMMENT_COUNTS_PER_POST = 15
+MAX_COMMENT_COUNTS_PER_POST = 20
 # Maximum forward counts(requests) crawled in per post.
 # It must be a positive number or None. None implys that crawling all forwards.
-MAX_FORWARD_COUNTS_PER_POST = 15
+MAX_FORWARD_COUNTS_PER_POST = 20
 # Maximum thumbup counts(requests) crawled in per post.
 # It must be a positive number or None. None implys that crawling all thumbups.
-MAX_THUMBUP_COUNTS_PER_POST = 15
+MAX_THUMBUP_COUNTS_PER_POST = 20
 
 # Your postgresql username.
 POSTGRESQL_USERNAME = 'your postgresql username'
