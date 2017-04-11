@@ -21,7 +21,7 @@ NEWSPIDER_MODULE = 'WeiboSpider.spiders'
 # Obey robots.txt rules
 #ROBOTSTXT_OBEY = True
 
-CONCURRENT_ITEMS = 20
+CONCURRENT_ITEMS = 50
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 CONCURRENT_REQUESTS = 4
@@ -172,27 +172,27 @@ TABLE_NAME_DICT = {
     'thumbup': 'thumbup'
 }
 
-# Maximum follow pages(requests) crawled for per user.
-# It must be a positive number or None. None implys that crawling all follow pages.
-MAX_FOLLOW_PAGES_PER_USER = 5
-# Maximum fan pages(requests) crawled for per user.
-# It must be a positive number or None. None implys that crawling all fan pages.
-MAX_FAN_PAGES_PER_USER = 5
-# Maximum post pages(requests) crawled for per user. And the maximum texts crawled in per post also equal to it.
-# It must be a positive number or None. None implys that crawling all post pages.
-MAX_POST_PAGES_PER_USER = 2
-# Maximum image pages(requests) crawled in per post.
-# It must be a positive number or None. None implys that crawling all image pages.
-MAX_IMAGE_PAGES_PER_POST = None
-# Maximum comment pages(requests) crawled in per post.
-# It must be a positive number or None. None implys that crawling all comment pages.
-MAX_COMMENT_PAGES_PER_POST = 2
-# Maximum forward pages(requests) crawled in per post.
-# It must be a positive number or None. None implys that crawling all forward pages.
-MAX_FORWARD_PAGES_PER_POST = 2
-# Maximum thumbup pages(requests) crawled in per post.
-# It must be a positive number or None. None implys that crawling all thumbup pages.
-MAX_THUMBUP_PAGES_PER_POST = 2
+# Maximum follower counts(requests) crawled for per user.
+# It must be a positive number or None. None implys that crawling all followers.
+MAX_FOLLOW_COUNTS_PER_USER = 50
+# Maximum fan counts(requests) crawled for per user.
+# It must be a positive number or None. None implys that crawling all fans.
+MAX_FAN_COUNTS_PER_USER = 50
+# Maximum post counts(requests) crawled for per user. And the maximum text counts crawled in per post also equal to it.
+# It must be a positive number or None. None implys that crawling all posts.
+MAX_POST_COUNTS_PER_USER = 15
+# Maximum image counts(requests) crawled in per post.
+# It must be a positive number or None. None implys that crawling all images.
+MAX_IMAGE_COUNTS_PER_POST = None
+# Maximum comment counts(requests) crawled in per post.
+# It must be a positive number or None. None implys that crawling all comments.
+MAX_COMMENT_COUNTS_PER_POST = 15
+# Maximum forward counts(requests) crawled in per post.
+# It must be a positive number or None. None implys that crawling all forwards.
+MAX_FORWARD_COUNTS_PER_POST = 15
+# Maximum thumbup counts(requests) crawled in per post.
+# It must be a positive number or None. None implys that crawling all thumbups.
+MAX_THUMBUP_COUNTS_PER_POST = 15
 
 # Your postgresql username.
 POSTGRESQL_USERNAME = 'your postgresql username'

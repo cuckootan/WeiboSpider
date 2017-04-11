@@ -231,7 +231,7 @@
     -   user\_info 对应表的结构为： **(user\_id varchar(20), user\_name text, gender varchar(5), district text)**
     -   follow 对应表的结构为： **(user\_id varchar(20), follow\_list text[])**
     -   fan 对应表的结构为： **(user\_id varchar(20), fan\_list text[])**
-    -   post\_info 对应表的结构为： **(user\_id varchar(20), post\_id varchar(20), publist\_time text)**
+    -   post 对应表的结构为： **(user\_id varchar(20), post\_list json)**
     -   text 对应表的结构为： **(user\_id varchar(20), post\_id varchar(20), text text)**
     -   image 对应表的结构为： **(user\_id varchar(20), post\_id varchar(20), image\_list text[])**
     -   comment 对应表的结构为： **(user\_id varchar(20), post\_id varchar(20), comment\_list json)**
