@@ -472,6 +472,9 @@ class WeiboSpider(CrawlSpider):
         # 否则，返回这条微博的所有评论。
         else:
             comment_item['size'] = len(comment_item['comment_list'])
+            if comment_item['size'] == 0:
+                return
+
             comment_item['comment_list'] = json.dumps(comment_item['comment_list'])
             self.logger.info('user_id: {0:s}, post_id: {1:s}. All the comments have been crawled.'.format(comment_item['user_id'], comment_item['post_id']))
             yield comment_item
@@ -516,6 +519,9 @@ class WeiboSpider(CrawlSpider):
         # 否则，返回这条微博的所有的转发内容，然后生成第一页点赞的 Request 对象。之所以不在 parse_post 里生成，是因为其中返回的 response 里没有正确的点赞 url（其中的 url 请求后相当于是点赞）。
         else:
             forward_item['size'] = len(forward_item['forward_list'])
+            if forward_item['size'] == 0:
+                return
+
             forward_item['forward_list'] = json.dumps(forward_item['forward_list'])
             self.logger.info('user_id: {0:s}, post_id: {1:s}. All the forwards have been crawled.'.format(forward_item['user_id'], forward_item['post_id']))
             yield forward_item
@@ -560,6 +566,9 @@ class WeiboSpider(CrawlSpider):
         # 否则，返回该条微博的所有点赞信息。
         else:
             thumbup_item['size'] = len(thumbup_item['thumbup_list'])
+            if thumbup_item['size'] == 0:
+                return
+
             thumbup_item['thumbup_list'] = json.dumps(thumbup_item['thumbup_list'])
             self.logger.info('user_id: {0:s}, post_id: {1:s}. All the thumbups have been crawled.'.format(thumbup_item['user_id'], thumbup_item['post_id']))
             yield thumbup_item
