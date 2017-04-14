@@ -50,6 +50,37 @@
     `sudo apt-get install libpq-dev`
 
     `sudo python3 -m pip install -U psycopg2`
+-   配置数据库
+
+    建立登录账号及数据库：
+
+    ```Shell
+        sudo -u postgres psql
+
+        # username 为登录用户名，password　为该用户的密码.
+        CREATE USER username WITH ENCRYPTED PASSWORD 'password';
+        # databse_name 为数据库名，username 为数据库的拥有者.
+        CREATE DATABASE database_name OWNER username;
+        # 之后退出.
+    ```
+
+    打开权限配置文件 **/etc/postgresql/9.5/main/pg\_hba.conf**，找到 **# IPv4 local connections**，在后面添加：
+
+    ```Shell
+        # username 为登录用户名.
+        host database_name username 网段 md5
+    ```
+
+    比如，**host weibo hello 114.212.0.0/16 md5**　表示这个网段内的所有主机可以通过登录 hello 账号来访问数据库 weibo。
+
+    打开连接配置文件 **/etc/postgresql/9.5/main/postgresql.conf**，找到 **# listen\_address = 'localhost'**，取消注释，并将其设置为：
+
+    ```Shell
+        listen_address = '*'
+    ```
+
+    配置完成后，重启服务：
+    `sudo service postgresql restart`
 
 ---
 
@@ -78,16 +109,7 @@
     -   将 **Python interpreter** 字段填写为 python3 解释器的路径；
     -   将 **Working directory** 字段填写为该项目的根目录的路径。比如：**/home/username/Project/WeiboSpider**；
     -   取消 **Add content roots to PYTHONPATH** 以及 **Add source roots to PYTHONPATH**。
-2.   配置 PostgreSQL 并建立数据库。打开 **/etc/postgresql/9.5/main/pg\_hba.conf**，添加如下字段到更改用户权限的相应位置。
-
-    ```Shell
-    local    all    your\_username    trust
-
-    或者
-
-    local    all    your\_username    md5
-    ```
-3.  程序中用到的所有配置都写在了项目中的 **settings.py** 里，因此将项目下载到本地后，只需配置更改其中的相应内容即可，无序修改其他源程序。
+2.  程序中用到的所有配置都写在了项目中的 **settings.py** 里，因此将项目下载到本地后，只需配置更改其中的相应内容即可，无序修改其他源程序。
     主要包括：
 
     ```Python
@@ -228,30 +250,29 @@
         TO_ADDR = ['send to where']
     ```
 
-    其中，各个表的所有列的字段及数据类型分别为（它们不能被改变，表名可以改变）：
+    其中，各个表对应的结构为：
 
-    -   user\_info 对应表的结构为： **(user\_id varchar(20), user\_name text, gender varchar(5), district text)**
-    -   follow 对应表的结构为： **(user\_id varchar(20), follow\_list text[])**
-    -   fan 对应表的结构为： **(user\_id varchar(20), fan\_list text[])**
-    -   post 对应表的结构为： **(user\_id varchar(20), post\_list json)**
-    -   text 对应表的结构为： **(user\_id varchar(20), post\_id varchar(20), text text)**
-    -   image 对应表的结构为： **(user\_id varchar(20), post\_id varchar(20), image\_list text[])**
-    -   comment 对应表的结构为： **(user\_id varchar(20), post\_id varchar(20), comment\_list json)**
-    -   forward 对应表的结构为： **(user\_id varchar(20), post\_id varchar(20), forward\_list json)**
-    -   thumbup 对应表的结构为： **(user\_id varchar(20), post\_id varchar(20), thumbup\_list json)**
+    -   user\_info 对应表的结构为： **(user\_id varchar(20) PRIMARY KEY NOT NULL, user\_name text NOT NULL, gender varchar(5) NOT NULL, district text NOT NULL)**
+    -   follow 对应表的结构为： **(user\_id varchar(20) PRIMARY KEY NOT NULL, follow\_list text[] NOT NULL)**
+    -   fan 对应表的结构为： **(user\_id varchar(20) PRIMARY KEY NOT NULL, fan\_list text[] NOT NULL)**
+    -   post 对应表的结构为： **(user\_id varchar(20) PRIMARY KEY NOT NULL, post\_list json NOT NULL)**
+    -   text 对应表的结构为： **(user\_id varchar(20) NOT NULL, post\_id varchar(20) NOT NULL, text text NOT NULL, PRIMARY KEY(user\_id, post\_id))**
+    -   image 对应表的结构为： **(user\_id varchar(20) NOT NULL, post\_id varchar(20) NOT NULL, image\_list text[] NOT NULL, PRIMARY KEY(user\_id, post\_id))**
+    -   comment 对应表的结构为： **(user\_id varchar(20) NOT NULL, post\_id varchar(20) NOT NULL, comment\_list json NOT NULL,PRIMARY KEY(user\_id, post\_id))**
+    -   forward 对应表的结构为： **(user\_id varchar(20) NOT NULL, post\_id varchar(20) NOT NULL, forward\_list json NOT NULL, PRIMARY KEY(user\_id, post\_id))**
+    -   thumbup 对应表的结构为： **(user\_id varchar(20) NOT NULL, post\_id varchar(20) NOT NULL, thumbup\_list json NOT NULL, PRIMARY KEY(user\_id, post\_id))**
 
-    还有一些其他配置项，详见 settings.py。
+    还有一些其他配置项，详见 **settings\.py**。
 
-## 5 数据的导出
+---
 
-进入 **setting.py** 中指定的数据库，对每个表执行如下命令：
+## 5 表的导出
+
+进入数据库，对每个表执行如下命令：
 
 `\copy table_name TO $ABSOLUTE_PATH`
 
-其中，**$ABSOLUTE_PATH** 为每个表对应输出文件的 **绝对路径**。
+其中，**$ABSOLUTE\_PATH** 为每个表对应输出文件的 **绝对路径**。
 
-对于表中 json 类型的字段，在输出到文件后用 python3 中的 json 包进行处理即可。
+对于表中 json 类型的字段，在输出到文件后用 Python3 中的 json 包进行处理即可。
 
-## TODO
-
--   添加用于实时查看爬虫信息的图形化界面（用 Graphite 实现）；
