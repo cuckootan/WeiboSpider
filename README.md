@@ -80,6 +80,7 @@
     ```
 
     配置完成后，重启服务：
+
     `sudo service postgresql restart`
 
 ---
