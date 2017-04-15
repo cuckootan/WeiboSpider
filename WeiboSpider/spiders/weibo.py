@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 __author__ = 'Jason'
 
-import scrapy, json, re, threading
+import scrapy, json, re
 from scrapy.spiders import CrawlSpider
 from datetime import datetime, timedelta
 
@@ -187,21 +187,11 @@ class WeiboSpider(CrawlSpider):
     # 爬取当前用户的所有微博的基本信息以及文本。对于每一条微博，爬取完基本信息后以及文本后，返回这两者，然后生成这条微博相关的第一张图片，第一页评论, 第一页转发的 Request 对象。
     def parse_post(self, response):
         post_item = response.meta['item']
+        user_id = post_item['user_id']
 
         for div_selector in response.xpath('//div[@class = "c" and @id and div]'):
-            user_id = post_item['user_id']
             post_id = div_selector.xpath('@id').extract_first()
             publish_time = None
-
-            # text_item 的结构体为: {'user_id': xxx, 'post_id': xxx, 'text': xxx}
-            text_item = TextItem(
-                user_id = None,
-                post_id = None,
-                text = None
-            )
-            text_item['user_id'] = user_id
-            text_item['post_id'] = post_id
-            text_item['text'] = div_selector.xpath('div[1]/span[@class = "ctt"]/text()').extract_first()
 
             # 如果存在图像.
             if div_selector.xpath('div[2]'):
@@ -250,6 +240,15 @@ class WeiboSpider(CrawlSpider):
                 'publish_time': publish_time
             })
 
+            # text_item 的结构体为: {'user_id': xxx, 'post_id': xxx, 'text': xxx}
+            text_item = TextItem(
+                user_id = None,
+                post_id = None,
+                text = None
+            )
+            text_item['user_id'] = user_id
+            text_item['post_id'] = post_id
+            text_item['text'] = div_selector.xpath('div[1]/span[@class = "ctt"]/text()').extract_first()
             # 返回当前用户的当前微博的文本.
             yield text_item
 
