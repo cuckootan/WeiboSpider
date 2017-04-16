@@ -55,62 +55,71 @@ class WeibospiderPipeline(object):
                 host = self.host,
                 database = self.database
             )
-            self.cursor = self.connector.cursor()
             self.logger.info('Conneting to database successfully!')
         except psycopg2.Error as e:
             sys.exit('Failed to connect database. Returned: {0:s}'.format(errorcodes.lookup(e.pgcode)))
 
         # 如果表不存在，则首先建表。
-        self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) PRIMARY KEY NOT NULL, user_name text NOT NULL, gender varchar(5) NOT NULL, district text NOT NULL);'.format(
-                self.table_name_dict['user_info']
+        cursor = self.connector.cursor()
+        try:
+            cursor.execute(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) PRIMARY KEY NOT NULL, user_name text NOT NULL, gender varchar(5) NOT NULL, district text NOT NULL);'.format(
+                    self.table_name_dict['user_info']
+                )
             )
-        )
-        self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) PRIMARY KEY NOT NULL, follow_list text[] NOT NULL);'.format(
-                self.table_name_dict['follow']
+            cursor.execute(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) PRIMARY KEY NOT NULL, follow_list text[] NOT NULL);'.format(
+                    self.table_name_dict['follow']
+                )
             )
-        )
-        self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) PRIMARY KEY NOT NULL, fan_list text[] NOT NULL);'.format(
-                self.table_name_dict['fan']
+            cursor.execute(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) PRIMARY KEY NOT NULL, fan_list text[] NOT NULL);'.format(
+                    self.table_name_dict['fan']
+                )
             )
-        )
-        self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) PRIMARY KEY NOT NULL, post_list json NOT NULL);'.format(
-                self.table_name_dict['post']
+            cursor.execute(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) PRIMARY KEY NOT NULL, post_list json NOT NULL);'.format(
+                    self.table_name_dict['post']
+                )
             )
-        )
-        self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, text text NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
-                self.table_name_dict['text']
+            cursor.execute(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, text text NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
+                    self.table_name_dict['text']
+                )
             )
-        )
-        self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, image_list text[] NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
-                self.table_name_dict['image']
+            cursor.execute(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, image_list text[] NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
+                    self.table_name_dict['image']
+                )
             )
-        )
-        self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, comment_list json NOT NULL,PRIMARY KEY(user_id, post_id));'.format(
-                self.table_name_dict['comment']
+            cursor.execute(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, comment_list json NOT NULL,PRIMARY KEY(user_id, post_id));'.format(
+                    self.table_name_dict['comment']
+                )
             )
-        )
-        self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, forward_list json NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
-                self.table_name_dict['forward']
+            cursor.execute(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, forward_list json NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
+                    self.table_name_dict['forward']
+                )
             )
-        )
-        self.cursor.execute(
-            'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, thumbup_list json NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
-                self.table_name_dict['thumbup']
+            cursor.execute(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, thumbup_list json NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
+                    self.table_name_dict['thumbup']
+                )
             )
-        )
-        self.connector.commit()
-        self.logger.info('Table check finished!')
+
+            self.connector.commit()
+            self.logger.info('Table check finished!')
+        except psycopg2.Error as e:
+            self.logger.error(
+                'Table check failed. Returned: {0:s}.'.format(
+                    errorcodes.lookup(e.pgcode)
+                )
+            )
+        finally:
+            cursor.close()
 
     def close_spider(self, spider):
-        self.cursor.close()
         self.connector.close()
 
         if self.mail_enabled:
@@ -128,12 +137,13 @@ class WeibospiderPipeline(object):
 
     def process_item(self, item, spider):
         if isinstance(item, UserInfoItem):
+            cursor = self.connector.cursor()
             try:
                 statement = (
                     'INSERT INTO {0:s} (user_id, user_name, gender, district)'
                     'VALUES (%(user_id)s, %(user_name)s, %(gender)s, %(district)s);'
                 ).format(self.table_name_dict['user_info'])
-                self.cursor.execute(
+                cursor.execute(
                     statement,
                     dict(item)
                 )
@@ -152,13 +162,17 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.connector.rollback()
+            finally:
+                cursor.close()
         elif isinstance(item, FollowItem):
+            cursor = self.connector.cursor()
             try:
                 statement = (
                     'INSERT INTO {0:s} (user_id, follow_list)'
                     'VALUES (%(user_id)s, %(follow_list)s);'
                 ).format(self.table_name_dict['follow'])
-                self.cursor.execute(
+                cursor.execute(
                     statement,
                     dict(item)
                 )
@@ -178,13 +192,17 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.connector.rollback()
+            finally:
+                cursor.close()
         elif isinstance(item, FanItem):
+            cursor = self.connector.cursor()
             try:
                 statement = (
                     'INSERT INTO {0:s} (user_id, fan_list)'
                     'VALUES (%(user_id)s, %(fan_list)s);'
                 ).format(self.table_name_dict['fan'])
-                self.cursor.execute(
+                cursor.execute(
                     statement,
                     dict(item)
                 )
@@ -204,13 +222,17 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.connector.rollback()
+            finally:
+                cursor.close()
         elif isinstance(item, PostItem):
+            cursor = self.connector.cursor()
             try:
                 statement = (
                     'INSERT INTO {0:s} (user_id, post_list)'
                     'VALUES (%(user_id)s, %(post_list)s);'
                 ).format(self.table_name_dict['post'])
-                self.cursor.execute(
+                cursor.execute(
                     statement,
                     dict(item)
                 )
@@ -230,13 +252,17 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.connector.rollback()
+            finally:
+                cursor.close()
         elif isinstance(item, TextItem):
+            cursor = self.connector.cursor()
             try:
                 statement = (
                     'INSERT INTO {0:s} (user_id, post_id, text)'
                     'VALUES (%(user_id)s, %(post_id)s, %(text)s);'
                 ).format(self.table_name_dict['text'])
-                self.cursor.execute(
+                cursor.execute(
                     statement,
                     dict(item)
                 )
@@ -256,13 +282,17 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.connector.rollback()
+            finally:
+                cursor.close()
         elif isinstance(item, ImageItem):
+            cursor = self.connector.cursor()
             try:
                 statement = (
                     'INSERT INTO {0:s} (user_id, post_id, image_list)'
                     'VALUES (%(user_id)s, %(post_id)s, %(image_list)s);'
                 ).format(self.table_name_dict['image'])
-                self.cursor.execute(
+                cursor.execute(
                     statement,
                     dict(item)
                 )
@@ -283,7 +313,11 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.connector.rollback()
+            finally:
+                cursor.close()
         elif isinstance(item, CommentItem):
+            cursor = self.connector.cursor()
             try:
                 statement = (
                     'INSERT INTO {0:s} (user_id, post_id, comment_list)'
@@ -291,7 +325,7 @@ class WeibospiderPipeline(object):
                 ).format(
                     self.table_name_dict['comment']
                 )
-                self.cursor.execute(
+                cursor.execute(
                     statement,
                     dict(item)
                 )
@@ -312,13 +346,17 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.connector.rollback()
+            finally:
+                cursor.close()
         elif isinstance(item, ForwardItem):
+            cursor = self.connector.cursor()
             try:
                 statement = (
                     'INSERT INTO {0:s} (user_id, post_id, forward_list) '
                     'VALUES (%(user_id)s, %(post_id)s, %(forward_list)s);'
                 ).format(self.table_name_dict['forward'])
-                self.cursor.execute(
+                cursor.execute(
                     statement,
                     dict(item)
                 )
@@ -339,13 +377,16 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.connector.rollback()
+            finally:cursor.close()
         elif isinstance(item, ThumbupItem):
+            cursor = self.connector.cursor()
             try:
                 statement = (
                     'INSERT INTO {0:s} (user_id, post_id, thumbup_list) '
                     'VALUES (%(user_id)s, %(post_id)s, %(thumbup_list)s);'
                 ).format(self.table_name_dict['thumbup'])
-                self.cursor.execute(
+                cursor.execute(
                     statement,
                     dict(item)
                 )
@@ -366,5 +407,8 @@ class WeibospiderPipeline(object):
                         errorcodes.lookup(e.pgcode)
                     )
                 )
+                self.connector.rollback()
+            finally:
+                cursor.close()
 
         return item
