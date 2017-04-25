@@ -20,6 +20,8 @@
 
 -   支持多账号爬虫。理论上，账号越多，被 ban 的几率越小；
 -   支持多 user-agent 轮流使用，目的在于减小被 ban 的几率；
+-   支持自定义 cookies。当模拟登录失败时，可以用此方法；
+-   支持两种方式爬取。一种是指定用户ID，然后爬取该用户的所有相关数据；另一种是指定微博ID，可以爬取该微博的所有文本，图像，评论，转发，点赞，以及发表该微博的用户的个人信息，粉丝，关注的人；
 -   用数据库存储，爬取结束后再从数据库导出，这样方便且高效；
 -   爬取结束时会自动发送邮件进行通知；
 
@@ -253,15 +255,15 @@
 
     其中，各个表对应的结构为：
 
-    -   user\_info 对应表的结构为： **(user\_id varchar(20) PRIMARY KEY NOT NULL, user\_name text NOT NULL, gender varchar(5) NOT NULL, district text NOT NULL)**
-    -   follow 对应表的结构为： **(user\_id varchar(20) PRIMARY KEY NOT NULL, follow\_list text[] NOT NULL)**
-    -   fan 对应表的结构为： **(user\_id varchar(20) PRIMARY KEY NOT NULL, fan\_list text[] NOT NULL)**
-    -   post 对应表的结构为： **(user\_id varchar(20) PRIMARY KEY NOT NULL, post\_list json NOT NULL)**
-    -   text 对应表的结构为： **(user\_id varchar(20) NOT NULL, post\_id varchar(20) NOT NULL, text text NOT NULL, PRIMARY KEY(user\_id, post\_id))**
-    -   image 对应表的结构为： **(user\_id varchar(20) NOT NULL, post\_id varchar(20) NOT NULL, image\_list text[] NOT NULL, PRIMARY KEY(user\_id, post\_id))**
-    -   comment 对应表的结构为： **(user\_id varchar(20) NOT NULL, post\_id varchar(20) NOT NULL, comment\_list json NOT NULL,PRIMARY KEY(user\_id, post\_id))**
-    -   forward 对应表的结构为： **(user\_id varchar(20) NOT NULL, post\_id varchar(20) NOT NULL, forward\_list json NOT NULL, PRIMARY KEY(user\_id, post\_id))**
-    -   thumbup 对应表的结构为： **(user\_id varchar(20) NOT NULL, post\_id varchar(20) NOT NULL, thumbup\_list json NOT NULL, PRIMARY KEY(user\_id, post\_id))**
+    -   user\_info 对应表的结构为： **(user_id varchar(20) PRIMARY KEY NOT NULL, user_name text NOT NULL, gender varchar(5) NOT NULL, district text NOT NULL, crawl_time date NOT NULL)**
+    -   follow 对应表的结构为： **(user_id varchar(20) PRIMARY KEY NOT NULL, follow_list text[] NOT NULL, crawl_time date NOT NULL)**
+    -   fan 对应表的结构为： **(user_id varchar(20) PRIMARY KEY NOT NULL, fan_list text[] NOT NULL, crawl_time date NOT NULL)**
+    -   post 对应表的结构为： **(user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, publish_time timestamp NOT NULL, crawl_time date NOT NULL, PRIMARY KEY(user_id, post_id))**
+    -   text 对应表的结构为： **(user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, text text NOT NULL, crawl_time date NOT NULL, PRIMARY KEY(user_id, post_id))**
+    -   image 对应表的结构为： **(user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, image_list text[] NOT NULL, crawl_time date NOT NULL, PRIMARY KEY(user_id, post_id))**
+    -   comment 对应表的结构为： **(user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, comment_list json NOT NULL, crawl_time date NOT NULL, PRIMARY KEY(user_id, post_id))**
+    -   forward 对应表的结构为： **(user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, forward_list json NOT NULL, crawl_time date NOT NULL, PRIMARY KEY(user_id, post_id))**
+    -   thumbup 对应表的结构为： **(user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, thumbup_list json NOT NULL, crawl_time date NOT NULL, PRIMARY KEY(user_id, post_id))**
 
     还有一些其他配置项，详见 **settings\.py**。
 

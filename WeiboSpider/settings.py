@@ -132,28 +132,34 @@ CUSTOM_COOKIES = True
 REQUEST_CUSTOM_COOKIE_LIST = [
     [
         {
-            'name': '_T_WM',
-            'value': 'f64c564b868e1cf4524e03ac8e73dbf1',
-            'domain': '.weibo.cn',
-            'path': '/'
+            "name": "_T_WM",
+            "value": "0524a2f976fdac9198bf39373b344511",
+            "domain": ".weibo.cn",
+            "path": "/"
         },
         {
-            'name': 'SUB',
-            'value': '_2A25141EKDeRhGeNM71AX9y7Ezj-IHXVXLH9CrDV6PUJbkdAKLUfbkW1MxbUzn6ftDpbR9LG294VmZnBBrg..',
-            'domain': '.weibo.cn',
-            'path': '/'
+            "name": "SUB",
+            "value": "_2A251-3323dRhGeNM71AX9y7Ezj-IHXVXBBnDrDV6PUJbkdBeLXWhkW0BVGG4iBgnqCauxfw3dOQlvrfbAg..",
+            "domain": ".weibo.cn",
+            "path": "/"
         },
         {
-            'name': 'gsid_CTandWM',
-            'value': '4u4191d91cCxb8HotkddOlZRcdL',
-            'domain': '.weibo.cn',
-            'path': '/'
+            "name": "SUHB",
+            "value": "1a4-7cl23Y2027",
+            "domain": ".weibo.cn",
+            "path": "/"
         },
         {
-            'name': 'PHPSESSID',
-            'value': '12711b317a8ed457fa504f54a022e4a9',
-            'host': 'weibo.cn',
-            'path': '/'
+            "name": "SCF",
+            "value": "Aq14etw_Efadp2bWSgHefFp_p1_OL3ST8qeh44tFELFQxTweTOmxeTQO7k_y_SVl3dfad3V2Yx3Iq9uDT8ROnz0M.",
+            "domain": ".weibo.cn",
+            "path": "/"
+        },
+        {
+            "name": "SSOLoginState",
+            "value": "3290008622",
+            "domain": ".weibo.cn",
+            "path": "/"
         }
     ]
 ]
@@ -181,6 +187,7 @@ MAX_FOLLOW_COUNTS_PER_USER = 50
 # It must be a positive number or None. None implys that crawling all fans.
 MAX_FAN_COUNTS_PER_USER = 50
 # Maximum post counts(requests) crawled for per user. And the maximum text counts crawled in per post also equal to it.
+# It will be available only if SPEC_WEIBO_ENABLED is set to False.
 # It must be a positive number or None. None implys that crawling all posts.
 MAX_POST_COUNTS_PER_USER = 20
 # Maximum image counts(requests) crawled in per post.
@@ -207,6 +214,10 @@ POSTGRESQL_DATABASE = 'your postgresql database name'
 
 # The IDs of users you want to crawl.
 CRAWLED_WEIBO_ID_LIST = ['123456789', '246812345', ...]
+
+# Crawl specific weibo.
+SPEC_WEIBO_ENABLED = True
+SPEC_WEIBO_LIST = [('123456789', 'M_abcdEFG'), ('246812345', 'M_efghABCD')]
 
 # Email notification.
 MAIL_ENABLED = False

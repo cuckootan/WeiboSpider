@@ -23,8 +23,7 @@ class WeibospiderPipeline(object):
 
         self.mail_enabled = settings.get('MAIL_ENABLED')
         if self.mail_enabled:
-            self.mailer = MailSender()
-            self.mailer.from_settings(settings)
+            self.mailer = MailSender.from_settings(settings)
             self.to_addr = settings.get('TO_ADDR')
 
         self.user_info_item_count = 1
@@ -63,47 +62,47 @@ class WeibospiderPipeline(object):
         cursor = self.connector.cursor()
         try:
             cursor.execute(
-                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) PRIMARY KEY NOT NULL, user_name text NOT NULL, gender varchar(5) NOT NULL, district text NOT NULL);'.format(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) PRIMARY KEY NOT NULL, user_name text NOT NULL, gender varchar(5) NOT NULL, district text NOT NULL, crawl_time date NOT NULL);'.format(
                     self.table_name_dict['user_info']
                 )
             )
             cursor.execute(
-                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) PRIMARY KEY NOT NULL, follow_list text[] NOT NULL);'.format(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) PRIMARY KEY NOT NULL, follow_list text[] NOT NULL, crawl_time date NOT NULL);'.format(
                     self.table_name_dict['follow']
                 )
             )
             cursor.execute(
-                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) PRIMARY KEY NOT NULL, fan_list text[] NOT NULL);'.format(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) PRIMARY KEY NOT NULL, fan_list text[] NOT NULL, crawl_time date NOT NULL);'.format(
                     self.table_name_dict['fan']
                 )
             )
             cursor.execute(
-                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) PRIMARY KEY NOT NULL, post_list json NOT NULL);'.format(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, publish_time timestamp NOT NULL, crawl_time date NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
                     self.table_name_dict['post']
                 )
             )
             cursor.execute(
-                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, text text NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, text text NOT NULL, crawl_time date NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
                     self.table_name_dict['text']
                 )
             )
             cursor.execute(
-                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, image_list text[] NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, image_list text[] NOT NULL, crawl_time date NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
                     self.table_name_dict['image']
                 )
             )
             cursor.execute(
-                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, comment_list json NOT NULL,PRIMARY KEY(user_id, post_id));'.format(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, comment_list json NOT NULL, crawl_time date NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
                     self.table_name_dict['comment']
                 )
             )
             cursor.execute(
-                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, forward_list json NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, forward_list json NOT NULL, crawl_time date NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
                     self.table_name_dict['forward']
                 )
             )
             cursor.execute(
-                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, thumbup_list json NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, thumbup_list json NOT NULL, crawl_time date NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
                     self.table_name_dict['thumbup']
                 )
             )
@@ -140,8 +139,8 @@ class WeibospiderPipeline(object):
             cursor = self.connector.cursor()
             try:
                 statement = (
-                    'INSERT INTO {0:s} (user_id, user_name, gender, district)'
-                    'VALUES (%(user_id)s, %(user_name)s, %(gender)s, %(district)s);'
+                    'INSERT INTO {0:s} (user_id, user_name, gender, district, crawl_time)'
+                    'VALUES (%(user_id)s, %(user_name)s, %(gender)s, %(district)s, %(crawl_time)s);'
                 ).format(self.table_name_dict['user_info'])
                 cursor.execute(
                     statement,
@@ -169,8 +168,8 @@ class WeibospiderPipeline(object):
             cursor = self.connector.cursor()
             try:
                 statement = (
-                    'INSERT INTO {0:s} (user_id, follow_list)'
-                    'VALUES (%(user_id)s, %(follow_list)s);'
+                    'INSERT INTO {0:s} (user_id, follow_list, crawl_time)'
+                    'VALUES (%(user_id)s, %(follow_list)s, %(crawl_time)s);'
                 ).format(self.table_name_dict['follow'])
                 cursor.execute(
                     statement,
@@ -199,8 +198,8 @@ class WeibospiderPipeline(object):
             cursor = self.connector.cursor()
             try:
                 statement = (
-                    'INSERT INTO {0:s} (user_id, fan_list)'
-                    'VALUES (%(user_id)s, %(fan_list)s);'
+                    'INSERT INTO {0:s} (user_id, fan_list, crawl_time)'
+                    'VALUES (%(user_id)s, %(fan_list)s, %(crawl_time)s);'
                 ).format(self.table_name_dict['fan'])
                 cursor.execute(
                     statement,
@@ -229,8 +228,8 @@ class WeibospiderPipeline(object):
             cursor = self.connector.cursor()
             try:
                 statement = (
-                    'INSERT INTO {0:s} (user_id, post_list)'
-                    'VALUES (%(user_id)s, %(post_list)s);'
+                    'INSERT INTO {0:s} (user_id, post_id, publish_time, crawl_time)'
+                    'VALUES (%(user_id)s, %(post_id)s, %(publish_time)s, %(crawl_time)s);'
                 ).format(self.table_name_dict['post'])
                 cursor.execute(
                     statement,
@@ -238,9 +237,9 @@ class WeibospiderPipeline(object):
                 )
                 self.connector.commit()
                 self.logger.info(
-                    'Write a post item (user_id: {0:s}) including {1:d} posts into database. Seq: {2:d}'.format(
+                    'Write a post item (user_id: {0:s} post_id: {1:s}) into database. Seq: {2:d}'.format(
                         item['user_id'],
-                        item['size'],
+                        item['post_id'],
                         self.post_item_count
                     )
                 )
@@ -259,8 +258,8 @@ class WeibospiderPipeline(object):
             cursor = self.connector.cursor()
             try:
                 statement = (
-                    'INSERT INTO {0:s} (user_id, post_id, text)'
-                    'VALUES (%(user_id)s, %(post_id)s, %(text)s);'
+                    'INSERT INTO {0:s} (user_id, post_id, text, crawl_time)'
+                    'VALUES (%(user_id)s, %(post_id)s, %(text)s, %(crawl_time)s);'
                 ).format(self.table_name_dict['text'])
                 cursor.execute(
                     statement,
@@ -289,8 +288,8 @@ class WeibospiderPipeline(object):
             cursor = self.connector.cursor()
             try:
                 statement = (
-                    'INSERT INTO {0:s} (user_id, post_id, image_list)'
-                    'VALUES (%(user_id)s, %(post_id)s, %(image_list)s);'
+                    'INSERT INTO {0:s} (user_id, post_id, image_list, crawl_time)'
+                    'VALUES (%(user_id)s, %(post_id)s, %(image_list)s, %(crawl_time)s);'
                 ).format(self.table_name_dict['image'])
                 cursor.execute(
                     statement,
@@ -320,8 +319,8 @@ class WeibospiderPipeline(object):
             cursor = self.connector.cursor()
             try:
                 statement = (
-                    'INSERT INTO {0:s} (user_id, post_id, comment_list)'
-                    'VALUES (%(user_id)s, %(post_id)s, %(comment_list)s);'
+                    'INSERT INTO {0:s} (user_id, post_id, comment_list, crawl_time)'
+                    'VALUES (%(user_id)s, %(post_id)s, %(comment_list)s, %(crawl_time)s);'
                 ).format(
                     self.table_name_dict['comment']
                 )
@@ -353,8 +352,8 @@ class WeibospiderPipeline(object):
             cursor = self.connector.cursor()
             try:
                 statement = (
-                    'INSERT INTO {0:s} (user_id, post_id, forward_list) '
-                    'VALUES (%(user_id)s, %(post_id)s, %(forward_list)s);'
+                    'INSERT INTO {0:s} (user_id, post_id, forward_list, crawl_time) '
+                    'VALUES (%(user_id)s, %(post_id)s, %(forward_list)s, %(crawl_time)s);'
                 ).format(self.table_name_dict['forward'])
                 cursor.execute(
                     statement,
@@ -383,8 +382,8 @@ class WeibospiderPipeline(object):
             cursor = self.connector.cursor()
             try:
                 statement = (
-                    'INSERT INTO {0:s} (user_id, post_id, thumbup_list) '
-                    'VALUES (%(user_id)s, %(post_id)s, %(thumbup_list)s);'
+                    'INSERT INTO {0:s} (user_id, post_id, thumbup_list, crawl_time) '
+                    'VALUES (%(user_id)s, %(post_id)s, %(thumbup_list)s, %(crawl_time)s);'
                 ).format(self.table_name_dict['thumbup'])
                 cursor.execute(
                     statement,
