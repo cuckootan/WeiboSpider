@@ -212,7 +212,7 @@ POSTGRESQL_HOST = 'your postgresql host'
 # Your postgresql databaes.
 POSTGRESQL_DATABASE = 'your postgresql database name'
 
-# The IDs of users you want to crawl.
+# The ID list of users you want to crawl.
 CRAWLED_WEIBO_USER_ID_LIST = ['123456789', '246812345', ...]
 
 # Crawl specific weibo.

@@ -33,7 +33,6 @@ class WeiboSpider(CrawlSpider):
 
         # 发送 requests.
         for user_id in user_id_list:
-
             yield scrapy.Request(
                 url = 'http://weibo.cn/' + user_id,
                 meta = {'user_id': user_id}
@@ -208,7 +207,7 @@ class WeiboSpider(CrawlSpider):
             self.logger.info('user_id: {0:s}. All the fans have been crawled.'.format(fan_item['user_id']))
             yield fan_item
 
-    def __send_other_requests(self, user_id, post_id, image_start_url, forward_start_url, thumbup_start_url):
+    def __send_other_requests(self, user_id = None, post_id = None, image_start_url = None, comment_start_url = None, forward_start_url = None, thumbup_start_url = None):
         # image_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'image_list': [1th_image, 2nd_image, ...], 'size': xxx, 'crawl_time': xxx}.
         image_item = ImageItem(
             user_id = None,
@@ -217,33 +216,9 @@ class WeiboSpider(CrawlSpider):
             size = None,
             crawl_time = None
         )
-        # forward_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'forward_list': [json.dumps({'forward_user': 1th_user, 'forward_time': 1th_time}), json.dumps({'forward_user': 2nd_user, 'forward_time': 2nd_time}), ...], 'size': xxx, 'crawl_time': xxx}.
-        forward_item = ForwardItem(
-            user_id = None,
-            post_id = None,
-            forward_list = None,
-            size = None,
-            crawl_time = None
-        )
-        # thumbup_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'thumbup_list': [json.dumps({'thumbup_user': 1th_user, 'thumbup_time': 1th_time}), json.dumps({'thumbup_user': 2nd_user, 'thumbup_time': 2nd_time}), ...], 'size': xxx, 'crawl_time': xxx}.
-        thumbup_item = ThumbupItem(
-            user_id = None,
-            post_id = None,
-            thumbup_list = None,
-            size = None,
-            crawl_time = None
-        )
-
         image_item['user_id'] = user_id
         image_item['post_id'] = post_id
         image_item['image_list'] = []
-        forward_item['user_id'] = user_id
-        forward_item['post_id'] = post_id
-        forward_item['forward_list'] = []
-        thumbup_item['user_id'] = user_id
-        thumbup_item['post_id'] = post_id
-        thumbup_item['thumbup_list'] = []
-
         # 生成这条微博的第一张图片的 Request 对象。
         yield scrapy.Request(
             url = image_start_url,
@@ -252,6 +227,40 @@ class WeiboSpider(CrawlSpider):
             callback = self.parse_image,
             errback = self.error_handler
         )
+
+        # 因为 parse_single_post 和 parse_all_posts 在爬取 comment 时的处理是不同的.
+        if comment_start_url is not None:
+            # comment_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'comment_list': [json.dumps({'comment_user': 1th_user, 'comment_text': 1th_text, 'comment_time': 1th_time}), json.dumps({'comment_user': 2nd_user, 'comment_text': 2nd_text, 'comment_time': 2nd_time}), ...], 'size': xxx, 'crawl_time': xxx}.
+            comment_item = CommentItem(
+                user_id = None,
+                post_id = None,
+                comment_list = None,
+                size = None,
+                crawl_time = None
+            )
+            comment_item['user_id'] = user_id
+            comment_item['post_id'] = post_id
+            comment_item['comment_list'] = []
+            # 生成这条微博的第一张图片的 Request 对象。
+            yield scrapy.Request(
+                url = comment_start_url,
+                meta = {'item': comment_item},
+                priority = 1,
+                callback = self.parse_comment,
+                errback = self.error_handler
+            )
+
+        # forward_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'forward_list': [json.dumps({'forward_user': 1th_user, 'forward_time': 1th_time}), json.dumps({'forward_user': 2nd_user, 'forward_time': 2nd_time}), ...], 'size': xxx, 'crawl_time': xxx}.
+        forward_item = ForwardItem(
+            user_id = None,
+            post_id = None,
+            forward_list = None,
+            size = None,
+            crawl_time = None
+        )
+        forward_item['user_id'] = user_id
+        forward_item['post_id'] = post_id
+        forward_item['forward_list'] = []
         # 生成这条微博的第一页转发的 Request 对象。
         yield scrapy.Request(
             url = forward_start_url,
@@ -260,6 +269,18 @@ class WeiboSpider(CrawlSpider):
             callback = self.parse_forward,
             errback = self.error_handler
         )
+
+        # thumbup_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'thumbup_list': [json.dumps({'thumbup_user': 1th_user, 'thumbup_time': 1th_time}), json.dumps({'thumbup_user': 2nd_user, 'thumbup_time': 2nd_time}), ...], 'size': xxx, 'crawl_time': xxx}.
+        thumbup_item = ThumbupItem(
+            user_id = None,
+            post_id = None,
+            thumbup_list = None,
+            size = None,
+            crawl_time = None
+        )
+        thumbup_item['user_id'] = user_id
+        thumbup_item['post_id'] = post_id
+        thumbup_item['thumbup_list'] = []
         # 生成这条微博的第一页点赞的 Request 对象。
         yield scrapy.Request(
             url = thumbup_start_url,
@@ -352,7 +373,13 @@ class WeiboSpider(CrawlSpider):
         yield from self.parse_comment(response)
 
         # 发送 image, forward, thumbup 的 request.
-        yield from self.__send_other_requests(user_id, post_id, image_start_url, forward_start_url, thumbup_start_url)
+        yield from self.__send_other_requests(
+            user_id = user_id,
+            post_id = post_id,
+            image_start_url = image_start_url,
+            forward_start_url = forward_start_url,
+            thumbup_start_url = thumbup_start_url
+        )
 
     # 爬取当前用户的所有微博的基本信息以及文本。对于每一条微博，爬取完基本信息后以及文本后，返回这两者，然后生成这条微博相关的第一张图片，第一页评论, 第一页转发的 Request 对象。
     def parse_all_posts(self, response):
@@ -432,14 +459,19 @@ class WeiboSpider(CrawlSpider):
 
             # 返回当前用户的当前微博的信息与文本.
             cnt += 1
+            self.logger.info('user_id: {0:s}, post info and text seq: {1:d}'.format(post_item['user_id'], cnt))
             yield post_item
             yield text_item
 
             # 发送 image, comemnt, forward, thumbup 的 request.
-            yield from self.__send_other_requests(user_id, post_id, image_start_url, comment_start_url, forward_start_url, thumbup_start_url)
-
-            cnt = len(post_item['post_list'])
-            self.logger.info('user_id: {0:s}, post seq: {1:d}'.format(post_item['user_id'], cnt))
+            yield from self.__send_other_requests(
+                user_id = user_id,
+                post_id = post_id,
+                image_start_url = image_start_url,
+                comment_start_url = comment_start_url,
+                forward_start_url = forward_start_url,
+                thumbup_start_url = thumbup_start_url
+            )
 
             if self.settings.get('MAX_POST_COUNTS_PER_USER') and cnt >= int(self.settings.get('MAX_POST_COUNTS_PER_USER')):
                 self.logger.info('user_id: {0:s}. All the posts have been crawled.'.format(post_item['user_id']))

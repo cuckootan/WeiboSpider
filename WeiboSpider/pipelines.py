@@ -77,7 +77,7 @@ class WeibospiderPipeline(object):
                 )
             )
             cursor.execute(
-                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) NOT NULL, post_id varchar(20) NOT NULL, publish_time timestamp NOT NULL, crawl_time date NOT NULL, PRIMARY KEY(user_id, post_id));'.format(
+                'CREATE TABLE IF NOT EXISTS {0:s} (user_id varchar(20) PRIMARY KEY NOT NULL, post_id varchar(20) NOT NULL, publish_time timestamp NOT NULL, crawl_time date NOT NULL);'.format(
                     self.table_name_dict['post']
                 )
             )
