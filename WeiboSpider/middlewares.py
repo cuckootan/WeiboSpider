@@ -7,7 +7,6 @@ from . import cookies
 import random
 
 
-
 class CustomCookiesMiddleware(object):
     def __init__(self, settings):
         custom_cookies = settings.get('CUSTOM_COOKIES')

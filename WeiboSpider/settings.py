@@ -182,10 +182,10 @@ TABLE_NAME_DICT = {
 
 # Maximum follower counts(requests) crawled for per user.
 # It must be a positive number or None. None implys that crawling all followers.
-MAX_FOLLOW_COUNTS_PER_USER = 50
+MAX_FOLLOW_COUNTS_PER_USER = 10
 # Maximum fan counts(requests) crawled for per user.
 # It must be a positive number or None. None implys that crawling all fans.
-MAX_FAN_COUNTS_PER_USER = 50
+MAX_FAN_COUNTS_PER_USER = 10
 # Maximum post counts(requests) crawled for per user. And the maximum text counts crawled in per post also equal to it.
 # It will be available only if SPEC_WEIBO_ENABLED is set to False.
 # It must be a positive number or None. None implys that crawling all posts.

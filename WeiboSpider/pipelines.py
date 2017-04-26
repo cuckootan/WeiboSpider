@@ -12,7 +12,6 @@ from .items import UserInfoItem, FollowItem, FanItem, \
     PostItem, TextItem, ImageItem, CommentItem, ForwardItem, ThumbupItem
 
 
-
 class WeibospiderPipeline(object):
     def __init__(self, settings):
         self.username = settings.get('POSTGRESQL_USERNAME')

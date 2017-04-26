@@ -8,7 +8,6 @@
 import scrapy
 
 
-
 class UserInfoItem(scrapy.Item):
     # 用户ID.
     user_id = scrapy.Field()

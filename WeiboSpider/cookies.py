@@ -5,7 +5,6 @@ __author__ = 'Jason'
 import requests, base64, urllib.parse, re, json, time, binascii, rsa
 
 
-
 class Cookies(object):
     def __init__(self, raw_username, raw_password):
         self.raw_username = raw_username
