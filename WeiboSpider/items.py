@@ -19,7 +19,7 @@ class UserInfoItem(scrapy.Item):
     # 所在地.
     district = scrapy.Field()
     # 爬取时间. 年月日.
-    crawl_time = scrapy.Field()
+    crawl_date = scrapy.Field()
 
 class FollowItem(scrapy.Item):
     user_id = scrapy.Field()
@@ -27,7 +27,7 @@ class FollowItem(scrapy.Item):
     follow_list = scrapy.Field()
     size = scrapy.Field()
     # 爬取时间. 年月日.
-    crawl_time = scrapy.Field()
+    crawl_date = scrapy.Field()
 
 class FanItem(scrapy.Item):
     user_id = scrapy.Field()
@@ -35,7 +35,7 @@ class FanItem(scrapy.Item):
     fan_list = scrapy.Field()
     size = scrapy.Field()
     # 爬取时间. 年月日.
-    crawl_time = scrapy.Field()
+    crawl_date = scrapy.Field()
 
 class PostItem(scrapy.Item):
     user_id = scrapy.Field()
@@ -44,7 +44,7 @@ class PostItem(scrapy.Item):
     # 发布时间.
     publish_time = scrapy.Field()
     # 爬取时间. 年月日.
-    crawl_time = scrapy.Field()
+    crawl_date = scrapy.Field()
 
 class TextItem(scrapy.Item):
     user_id = scrapy.Field()
@@ -52,7 +52,7 @@ class TextItem(scrapy.Item):
     # 每条微博的文本.
     text = scrapy.Field()
     # 爬取时间. 年月日.
-    crawl_time = scrapy.Field()
+    crawl_date = scrapy.Field()
 
 class ImageItem(scrapy.Field):
     user_id = scrapy.Field()
@@ -61,7 +61,7 @@ class ImageItem(scrapy.Field):
     image_list = scrapy.Field()
     size = scrapy.Field()
     # 爬取时间. 年月日.
-    crawl_time = scrapy.Field()
+    crawl_date = scrapy.Field()
 
 class CommentItem(scrapy.Item):
     user_id = scrapy.Field()
@@ -70,7 +70,7 @@ class CommentItem(scrapy.Item):
     comment_list = scrapy.Field()
     size = scrapy.Field()
     # 爬取时间. 年月日.
-    crawl_time = scrapy.Field()
+    crawl_date = scrapy.Field()
 
 class ForwardItem(scrapy.Item):
     user_id = scrapy.Field()
@@ -79,7 +79,7 @@ class ForwardItem(scrapy.Item):
     forward_list = scrapy.Field()
     size = scrapy.Field()
     # 爬取时间. 年月日.
-    crawl_time = scrapy.Field()
+    crawl_date = scrapy.Field()
 
 class ThumbupItem(scrapy.Item):
     user_id = scrapy.Field()
@@ -88,4 +88,4 @@ class ThumbupItem(scrapy.Item):
     thumbup_list = scrapy.Field()
     size = scrapy.Field()
     # 爬取时间. 年月日.
-    crawl_time = scrapy.Field()
+    crawl_date = scrapy.Field()

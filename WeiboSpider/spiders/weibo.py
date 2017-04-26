@@ -4,11 +4,10 @@ __author__ = 'Jason'
 
 import scrapy, json, re
 from scrapy.spiders import CrawlSpider
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 
 from ..items import UserInfoItem, FollowItem, FanItem, \
     PostItem, TextItem, ImageItem, CommentItem, ForwardItem, ThumbupItem
-
 
 
 class WeiboSpider(CrawlSpider):
@@ -34,50 +33,50 @@ class WeiboSpider(CrawlSpider):
         # 发送 requests.
         for user_id in user_id_list:
             yield scrapy.Request(
-                url = 'http://weibo.cn/' + user_id,
-                meta = {'user_id': user_id}
+                url='http://weibo.cn/' + user_id,
+                meta={'user_id': user_id}
             )
 
             yield scrapy.Request(
-                url = 'http://weibo.cn/' + user_id + '/info',
-                meta = {'user_id': user_id},
-                callback = self.parse_user_info,
-                errback = self.error_handler
+                url='http://weibo.cn/' + user_id + '/info',
+                meta={'user_id': user_id},
+                callback=self.parse_user_info,
+                errback=self.error_handler
             )
 
             # follow_item 的结构为：{'user_id': xxx, 'follow_list': [1th_follow, 2th_follow, ...]}。
             follow_item = FollowItem(
-                user_id = None,
-                follow_list = None,
-                size = None,
-                crawl_time = None
+                user_id=None,
+                follow_list=None,
+                size=None,
+                crawl_date=None
             )
             follow_item['user_id'] = user_id
             follow_item['follow_list'] = []
             # fan_item 的结构为：{'user_id': xxx, 'fan_list': [1th_fan, 2th_fan, ...]}。
             fan_item = FanItem(
-                user_id = None,
-                fan_list = None,
-                size = None,
-                crawl_time = None
+                user_id=None,
+                fan_list=None,
+                size=None,
+                crawl_date=None
             )
             fan_item['user_id'] = user_id
             fan_item['fan_list'] = []
 
             # 生成关注的 Request 对象，用以爬取当前用户关注的人。
             yield scrapy.Request(
-                url = 'http://weibo.cn/' + user_id + '/follow?page=1',
-                meta = {'item': follow_item},
-                callback = self.parse_follow,
-                errback = self.error_handler
+                url='http://weibo.cn/' + user_id + '/follow?page=1',
+                meta={'item': follow_item},
+                callback=self.parse_follow,
+                errback=self.error_handler
             )
 
             # 生成粉丝的 Request 对象，用以爬取当前用户的粉丝。
             yield scrapy.Request(
-                url = 'http://weibo.cn/' + user_id + '/fans?page=1',
-                meta = {'item': fan_item},
-                callback = self.parse_fan,
-                errback = self.error_handler
+                url='http://weibo.cn/' + user_id + '/fans?page=1',
+                meta={'item': fan_item},
+                callback=self.parse_fan,
+                errback=self.error_handler
             )
 
     def start_requests(self):
@@ -89,39 +88,35 @@ class WeiboSpider(CrawlSpider):
             for user_id, post_id in self.settings.get('SPEC_WEIBO_LIST'):
                 # 生成指定微博的基本信息的 Request 对象.
                 yield scrapy.Request(
-                    url = 'http://weibo.cn/comment/' + re.split('_', post_id)[1],
-                    meta = {'user_id': user_id, 'post_id': post_id},
-                    callback = self.parse_single_post,
-                    errback = self.error_handler
+                    url='http://weibo.cn/comment/' + re.split('_', post_id)[1],
+                    meta={'user_id': user_id, 'post_id': post_id},
+                    callback=self.parse_single_post,
+                    errback=self.error_handler
                 )
         else:
             for user_id in self.settings.get('CRAWLED_WEIBO_USER_ID_LIST'):
                 # 生成首条微博的基本信息的 Request 对象.
                 yield scrapy.Request(
-                    url = 'http://weibo.cn/' + user_id + '?filter=1&page=1',
-                    meta = {'user_id': user_id, 'cnt': 0},
-                    callback = self.parse_all_posts,
-                    errback = self.error_handler
+                    url='http://weibo.cn/' + user_id + '?filter=1&page=1',
+                    meta={'user_id': user_id, 'cnt': 0},
+                    callback=self.parse_all_posts,
+                    errback=self.error_handler
                 )
 
     # 爬取当前用户的个人信息并返回，并且生成关注，粉丝，微博基本信息的 Requst对象。
     def parse_user_info(self, response):
         # user_info_item 的结构为：{'user_id': xxx, 'user_name': xxx, 'gender': xxx, 'district': xxx}。
         user_info_item = UserInfoItem(
-            user_id = None,
-            user_name = None,
-            gender = None,
-            district = None,
-            crawl_time = None
+            user_id=None,
+            user_name=None,
+            gender=None,
+            district=None,
+            crawl_date=None
         )
 
-        div_selector = response.xpath('//div[@class = "c" and contains(text(), "昵称")]')
-        user_info_item['user_id'] = response.meta['user_id']
-
-        text = div_selector.xpath('text()').extract()
-        for item in text:
+        user_info = response.xpath('//body/div[@class = "c" and contains(text(), "昵称")]/text()').extract()
+        for item in user_info:
             temp = re.split(':|：', item)
-
             if temp[0] == '昵称':
                 user_info_item['user_name'] = temp[1]
             elif temp[0] == '性别':
@@ -129,7 +124,8 @@ class WeiboSpider(CrawlSpider):
             elif temp[0] == '地区':
                 user_info_item['district'] = temp[1]
 
-        user_info_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+        user_info_item['user_id'] = response.meta['user_id']
+        user_info_item['crawl_date'] = date.today()
 
         self.logger.info('user_id: {0:s}. Its user_info has been crawled.'.format(user_info_item['user_id']))
         yield user_info_item
@@ -146,7 +142,7 @@ class WeiboSpider(CrawlSpider):
 
             if self.settings.get('MAX_FOLLOW_COUNTS_PER_USER') and cnt >= int(self.settings.get('MAX_FOLLOW_COUNTS_PER_USER')):
                 follow_item['size'] = cnt
-                follow_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+                follow_item['crawl_date'] = date.today()
 
                 self.logger.info('user_id: {0:s}. All the followers have been crawled.'.format(follow_item['user_id']))
                 yield follow_item
@@ -156,16 +152,16 @@ class WeiboSpider(CrawlSpider):
         if response.xpath('//div[@id = "pagelist"]//a[contains(text(), "下页")]'):
             next_url = 'http://weibo.cn' + response.xpath('//div[@id = "pagelist"]/form/div/a[1]/@href').extract_first()
             request = scrapy.Request(
-                url = next_url,
-                meta = {'item': follow_item},
-                callback = self.parse_follow,
-                errback = self.error_handler
+                url=next_url,
+                meta={'item': follow_item},
+                callback=self.parse_follow,
+                errback=self.error_handler
             )
             yield request
         # 否则，返回当前用户的所有的关注的人。
         else:
             follow_item['size'] = len(follow_item['follow_list'])
-            follow_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+            follow_item['crawl_date'] = date.today()
 
             self.logger.info('user_id: {0:s}. All the followers have been crawled.'.format(follow_item['user_id']))
             yield follow_item
@@ -183,7 +179,7 @@ class WeiboSpider(CrawlSpider):
 
             if self.settings.get('MAX_FAN_COUNTS_PER_USER') and cnt >= int(self.settings.get('MAX_FAN_COUNTS_PER_USER')):
                 fan_item['size'] = cnt
-                fan_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+                fan_item['crawl_date'] = date.today()
 
                 self.logger.info('user_id: {0:s}. All the fans have been crawled.'.format(fan_item['user_id']))
                 yield fan_item
@@ -193,101 +189,102 @@ class WeiboSpider(CrawlSpider):
         if response.xpath('//div[@id = "pagelist"]//a[contains(text(), "下页")]'):
             next_url = 'http://weibo.cn' + response.xpath('//div[@id = "pagelist"]/form/div/a[1]/@href').extract_first()
             request = scrapy.Request(
-                url = next_url,
-                meta = {'item': fan_item},
-                callback = self.parse_fan,
-                errback = self.error_handler
+                url=next_url,
+                meta={'item': fan_item},
+                callback=self.parse_fan,
+                errback=self.error_handler
             )
             yield request
         # 否则，返回当前用户的所有粉丝。
         else:
             fan_item['size'] = len(fan_item['fan_list'])
-            fan_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+            fan_item['crawl_date'] = date.today()
 
             self.logger.info('user_id: {0:s}. All the fans have been crawled.'.format(fan_item['user_id']))
             yield fan_item
 
-    def __send_other_requests(self, user_id = None, post_id = None, image_start_url = None, comment_start_url = None, forward_start_url = None, thumbup_start_url = None):
-        # image_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'image_list': [1th_image, 2nd_image, ...], 'size': xxx, 'crawl_time': xxx}.
+    def __send_other_requests(self, user_id=None, post_id=None, image_start_url=None, comment_start_url=None, forward_start_url=None,
+                              thumbup_start_url=None):
+        # image_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'image_list': [1th_image, 2nd_image, ...], 'size': xxx, 'crawl_date': xxx}.
         image_item = ImageItem(
-            user_id = None,
-            post_id = None,
-            image_list = None,
-            size = None,
-            crawl_time = None
+            user_id=None,
+            post_id=None,
+            image_list=None,
+            size=None,
+            crawl_date=None
         )
         image_item['user_id'] = user_id
         image_item['post_id'] = post_id
         image_item['image_list'] = []
         # 生成这条微博的第一张图片的 Request 对象。
         yield scrapy.Request(
-            url = image_start_url,
-            meta = {'item': image_item},
-            priority = 1,
-            callback = self.parse_image,
-            errback = self.error_handler
+            url=image_start_url,
+            meta={'item': image_item},
+            priority=1,
+            callback=self.parse_image,
+            errback=self.error_handler
         )
 
         # 因为 parse_single_post 和 parse_all_posts 在爬取 comment 时的处理是不同的.
         if comment_start_url is not None:
-            # comment_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'comment_list': [json.dumps({'comment_user': 1th_user, 'comment_text': 1th_text, 'comment_time': 1th_time}), json.dumps({'comment_user': 2nd_user, 'comment_text': 2nd_text, 'comment_time': 2nd_time}), ...], 'size': xxx, 'crawl_time': xxx}.
+            # comment_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'comment_list': [json.dumps({'comment_user': 1th_user, 'comment_text': 1th_text, 'comment_time': 1th_time}), json.dumps({'comment_user': 2nd_user, 'comment_text': 2nd_text, 'comment_time': 2nd_time}), ...], 'size': xxx, 'crawl_date': xxx}.
             comment_item = CommentItem(
-                user_id = None,
-                post_id = None,
-                comment_list = None,
-                size = None,
-                crawl_time = None
+                user_id=None,
+                post_id=None,
+                comment_list=None,
+                size=None,
+                crawl_date=None
             )
             comment_item['user_id'] = user_id
             comment_item['post_id'] = post_id
             comment_item['comment_list'] = []
             # 生成这条微博的第一张图片的 Request 对象。
             yield scrapy.Request(
-                url = comment_start_url,
-                meta = {'item': comment_item},
-                priority = 1,
-                callback = self.parse_comment,
-                errback = self.error_handler
+                url=comment_start_url,
+                meta={'item': comment_item},
+                priority=1,
+                callback=self.parse_comment,
+                errback=self.error_handler
             )
 
-        # forward_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'forward_list': [json.dumps({'forward_user': 1th_user, 'forward_time': 1th_time}), json.dumps({'forward_user': 2nd_user, 'forward_time': 2nd_time}), ...], 'size': xxx, 'crawl_time': xxx}.
+        # forward_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'forward_list': [json.dumps({'forward_user': 1th_user, 'forward_time': 1th_time}), json.dumps({'forward_user': 2nd_user, 'forward_time': 2nd_time}), ...], 'size': xxx, 'crawl_date': xxx}.
         forward_item = ForwardItem(
-            user_id = None,
-            post_id = None,
-            forward_list = None,
-            size = None,
-            crawl_time = None
+            user_id=None,
+            post_id=None,
+            forward_list=None,
+            size=None,
+            crawl_date=None
         )
         forward_item['user_id'] = user_id
         forward_item['post_id'] = post_id
         forward_item['forward_list'] = []
         # 生成这条微博的第一页转发的 Request 对象。
         yield scrapy.Request(
-            url = forward_start_url,
-            meta = {'item': forward_item},
-            priority = 1,
-            callback = self.parse_forward,
-            errback = self.error_handler
+            url=forward_start_url,
+            meta={'item': forward_item},
+            priority=1,
+            callback=self.parse_forward,
+            errback=self.error_handler
         )
 
-        # thumbup_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'thumbup_list': [json.dumps({'thumbup_user': 1th_user, 'thumbup_time': 1th_time}), json.dumps({'thumbup_user': 2nd_user, 'thumbup_time': 2nd_time}), ...], 'size': xxx, 'crawl_time': xxx}.
+        # thumbup_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'thumbup_list': [json.dumps({'thumbup_user': 1th_user, 'thumbup_time': 1th_time}), json.dumps({'thumbup_user': 2nd_user, 'thumbup_time': 2nd_time}), ...], 'size': xxx, 'crawl_date': xxx}.
         thumbup_item = ThumbupItem(
-            user_id = None,
-            post_id = None,
-            thumbup_list = None,
-            size = None,
-            crawl_time = None
+            user_id=None,
+            post_id=None,
+            thumbup_list=None,
+            size=None,
+            crawl_date=None
         )
         thumbup_item['user_id'] = user_id
         thumbup_item['post_id'] = post_id
         thumbup_item['thumbup_list'] = []
         # 生成这条微博的第一页点赞的 Request 对象。
         yield scrapy.Request(
-            url = thumbup_start_url,
-            meta = {'item': thumbup_item},
-            priority = 1,
-            callback = self.parse_thumbup,
-            errback = self.error_handler
+            url=thumbup_start_url,
+            meta={'item': thumbup_item},
+            priority=1,
+            callback=self.parse_thumbup,
+            errback=self.error_handler
         )
 
     def parse_single_post(self, response):
@@ -301,7 +298,8 @@ class WeiboSpider(CrawlSpider):
 
         flag = True
         for span_selector in response.xpath('(//body/div[not(@class) and not(@id)])/span'):
-            temp_str = span_selector.xpath('./a/text()').extract_first() if span_selector.xpath('./a') else span_selector.xpath('./text()').extract_first()
+            temp_str = span_selector.xpath('./a/text()').extract_first() if span_selector.xpath('./a') else span_selector.xpath(
+                './text()').extract_first()
             if re.search('转发', temp_str):
                 temp_list = re.findall(r'\d+', temp_str)
                 if (not temp_list) or (temp_list[0] == '0'):
@@ -331,39 +329,39 @@ class WeiboSpider(CrawlSpider):
         post_id = response.meta['post_id']
 
         post_item = PostItem(
-            user_id = None,
-            post_id = None,
-            publish_time = None,
-            crawl_time = None
+            user_id=None,
+            post_id=None,
+            publish_time=None,
+            crawl_date=None
         )
         post_item['user_id'] = user_id
         post_item['post_id'] = post_id
         post_item['publish_time'] = publish_time
-        post_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+        post_item['crawl_date'] = date.today()
 
-        # text_item 的结构体为: {'user_id': xxx, 'post_id': xxx, 'text': xxx, 'crawl_time': xxx}.
+        # text_item 的结构体为: {'user_id': xxx, 'post_id': xxx, 'text': xxx, 'crawl_date': xxx}.
         text_item = TextItem(
-            user_id = None,
-            post_id = None,
-            text = None,
-            crawl_time = None
+            user_id=None,
+            post_id=None,
+            text=None,
+            crawl_date=None
         )
         text_item['user_id'] = user_id
         text_item['post_id'] = post_id
         text_item['text'] = response.xpath('//body/div[@class = "c" and @id = "M_"]/div[1]/span[@class = "ctt"]/text()').extract_first()
-        text_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+        text_item['crawl_date'] = date.today()
 
         self.logger.info('user_id: {0:s} post_id: {1:s}. Its post info and text have been crawled.'.format(user_id, post_id))
         yield post_item
         yield text_item
 
-        # comment_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'comment_list': [json.dumps({'comment_user': 1th_user, 'comment_text': 1th_text, 'comment_time': 1th_time}), json.dumps({'comment_user': 2nd_user, 'comment_text': 2nd_text, 'comment_time': 2nd_time}), ...], 'size': xxx, 'crawl_time': xxx}.
+        # comment_item 的结构为：{'user_id': xxx, 'post_id': xxx, 'comment_list': [json.dumps({'comment_user': 1th_user, 'comment_text': 1th_text, 'comment_time': 1th_time}), json.dumps({'comment_user': 2nd_user, 'comment_text': 2nd_text, 'comment_time': 2nd_time}), ...], 'size': xxx, 'crawl_date': xxx}.
         comment_item = CommentItem(
-            user_id = None,
-            post_id = None,
-            comment_list = None,
-            size = None,
-            crawl_time = None
+            user_id=None,
+            post_id=None,
+            comment_list=None,
+            size=None,
+            crawl_date=None
         )
         comment_item['user_id'] = user_id
         comment_item['post_id'] = post_id
@@ -374,11 +372,11 @@ class WeiboSpider(CrawlSpider):
 
         # 发送 image, forward, thumbup 的 request.
         yield from self.__send_other_requests(
-            user_id = user_id,
-            post_id = post_id,
-            image_start_url = image_start_url,
-            forward_start_url = forward_start_url,
-            thumbup_start_url = thumbup_start_url
+            user_id=user_id,
+            post_id=post_id,
+            image_start_url=image_start_url,
+            forward_start_url=forward_start_url,
+            thumbup_start_url=thumbup_start_url
         )
 
     # 爬取当前用户的所有微博的基本信息以及文本。对于每一条微博，爬取完基本信息后以及文本后，返回这两者，然后生成这条微博相关的第一张图片，第一页评论, 第一页转发的 Request 对象。
@@ -402,21 +400,22 @@ class WeiboSpider(CrawlSpider):
                         continue
 
                     if re.search('赞', temp_str):
-                        #　如果点赞个数为 0.
+                        # 　如果点赞个数为 0.
                         temp_list = re.findall(r'\d+', temp_str)
                         if (not temp_list) or (temp_list[0] == '0'):
                             flag = False
                         else:
-                            thumbup_start_url = re.split(r'(http://weibo.cn/attitude/[^/]+)', a_selector.xpath('@href').extract_first())[1] + '?#attitude'
+                            thumbup_start_url = re.split(r'(http://weibo.cn/attitude/[^/]+)', a_selector.xpath('@href').extract_first())[
+                                                    1] + '?#attitude'
                     elif re.search('转发', temp_str):
-                        #　如果转发个数为 0.
+                        # 　如果转发个数为 0.
                         temp_list = re.findall(r'\d+', temp_str)
                         if (not temp_list) or (temp_list[0] == '0'):
                             flag = False
                         else:
                             forward_start_url = a_selector.xpath('@href').extract_first()
                     elif re.search('评论', temp_str):
-                        #　如果评论个数为 0.
+                        # 　如果评论个数为 0.
                         temp_list = re.findall(r'\d+', temp_str)
                         if (not temp_list) or (temp_list[0] == '0'):
                             flag = False
@@ -435,27 +434,27 @@ class WeiboSpider(CrawlSpider):
             publish_time = self.__handle_time(self.__get_time(response.headers['date']), publish_time)
 
             post_item = PostItem(
-                user_id = None,
-                post_id = None,
-                publish_time = None,
-                crawl_time = None
+                user_id=None,
+                post_id=None,
+                publish_time=None,
+                crawl_date=None
             )
             post_item['user_id'] = user_id
             post_item['post_id'] = post_id
             post_item['publish_time'] = publish_time
-            post_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+            post_item['crawl_date'] = date.today()
 
-            # text_item 的结构体为: {'user_id': xxx, 'post_id': xxx, 'text': xxx, 'crawl_time': xxx}.
+            # text_item 的结构体为: {'user_id': xxx, 'post_id': xxx, 'text': xxx, 'crawl_date': xxx}.
             text_item = TextItem(
-                user_id = None,
-                post_id = None,
-                text = None,
-                crawl_time = None
+                user_id=None,
+                post_id=None,
+                text=None,
+                crawl_date=None
             )
             text_item['user_id'] = user_id
             text_item['post_id'] = post_id
             text_item['text'] = div_selector.xpath('div[1]/span[@class = "ctt"]/text()').extract_first()
-            text_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+            text_item['crawl_date'] = date.today()
 
             # 返回当前用户的当前微博的信息与文本.
             cnt += 1
@@ -465,12 +464,12 @@ class WeiboSpider(CrawlSpider):
 
             # 发送 image, comemnt, forward, thumbup 的 request.
             yield from self.__send_other_requests(
-                user_id = user_id,
-                post_id = post_id,
-                image_start_url = image_start_url,
-                comment_start_url = comment_start_url,
-                forward_start_url = forward_start_url,
-                thumbup_start_url = thumbup_start_url
+                user_id=user_id,
+                post_id=post_id,
+                image_start_url=image_start_url,
+                comment_start_url=comment_start_url,
+                forward_start_url=forward_start_url,
+                thumbup_start_url=thumbup_start_url
             )
 
             if self.settings.get('MAX_POST_COUNTS_PER_USER') and cnt >= int(self.settings.get('MAX_POST_COUNTS_PER_USER')):
@@ -482,10 +481,10 @@ class WeiboSpider(CrawlSpider):
             next_url = 'http://weibo.cn' \
                        + response.xpath('//div[@id = "pagelist" and @class = "pa"]//a[contains(text(), "下页")]/@href').extract_first()
             request = scrapy.Request(
-                url = next_url,
-                meta = {'user_id': user_id, 'cnt': cnt},
-                callback = self.parse_all_posts,
-                errback = self.error_handler
+                url=next_url,
+                meta={'user_id': user_id, 'cnt': cnt},
+                callback=self.parse_all_posts,
+                errback=self.error_handler
             )
             yield request
 
@@ -494,35 +493,35 @@ class WeiboSpider(CrawlSpider):
 
     def __handle_time(self, now_time, publish_time):
         if re.match(r'\d+分钟前', publish_time):
-            return now_time - timedelta(minutes = int(re.findall('\d+', publish_time)[0]))
+            return now_time - timedelta(minutes=int(re.findall('\d+', publish_time)[0]))
         elif re.match(r'今天', publish_time):
             temp_time = re.findall(r'\d+', publish_time)
             return datetime(
-                year = now_time.date().year,
-                month = now_time.date().month,
-                day = now_time.date().day,
-                hour = int(temp_time[0]),
-                minute = int(temp_time[1])
+                year=now_time.date().year,
+                month=now_time.date().month,
+                day=now_time.date().day,
+                hour=int(temp_time[0]),
+                minute=int(temp_time[1])
             )
         else:
             temp_time = re.findall(r'\d+', publish_time)
             # x-x-x x:x
             if int(temp_time[0]) > 12:
                 return datetime(
-                    year = int(temp_time[0]),
-                    month = int(temp_time[1]),
-                    day = int(temp_time[2]),
-                    hour = int(temp_time[3]),
-                    minute = int(temp_time[4])
+                    year=int(temp_time[0]),
+                    month=int(temp_time[1]),
+                    day=int(temp_time[2]),
+                    hour=int(temp_time[3]),
+                    minute=int(temp_time[4])
                 )
             # x月x日 x:x
             else:
                 return datetime(
-                    year = now_time.date().year,
-                    month = int(temp_time[0]),
-                    day = int(temp_time[1]),
-                    hour = int(temp_time[2]),
-                    minute = int(temp_time[3])
+                    year=now_time.date().year,
+                    month=int(temp_time[0]),
+                    day=int(temp_time[1]),
+                    hour=int(temp_time[2]),
+                    minute=int(temp_time[3])
                 )
 
     # 递归地爬取某条微博的所有图片，爬取结束后返回。
@@ -533,7 +532,7 @@ class WeiboSpider(CrawlSpider):
         if div_selector:
             image_item['image_list'].append(div_selector[0].xpath('img/@src').extract_first())
             image_item['size'] = len(image_item['image_list'])
-            image_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+            image_item['crawl_date'] = date.today()
 
             self.logger.info('user_id: {0:s}, post_id: {1:s}. All the images have been crawled.'.format(image_item['user_id'], image_item['post_id']))
             yield image_item
@@ -547,7 +546,7 @@ class WeiboSpider(CrawlSpider):
 
         if self.settings.get('MAX_IMAGE_COUNTS_PER_POST') and cnt >= int(self.settings.get('MAX_IMAGE_COUNTS_PER_POST')):
             image_item['size'] = cnt
-            image_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+            image_item['crawl_date'] = date.today()
 
             self.logger.info('user_id: {0:s}, post_id: {1:s}. All the images have been crawled.'.format(image_item['user_id'], image_item['post_id']))
             yield image_item
@@ -557,17 +556,17 @@ class WeiboSpider(CrawlSpider):
         if div_selector[0].xpath('div[@class = "tc"][2]/a[contains(text(), "下一张")]'):
             next_url = 'http://weibo.cn' + div_selector[0].xpath('div[@class = "tc"][2]/a/@href').extract_first()
             request = scrapy.Request(
-                url = next_url,
-                meta = {'item': image_item},
-                priority = 1,
-                callback = self.parse_image,
-                errback = self.error_handler
+                url=next_url,
+                meta={'item': image_item},
+                priority=1,
+                callback=self.parse_image,
+                errback=self.error_handler
             )
             yield request
         # 否则，返回这条微博的所有图像。
         else:
             image_item['size'] = len(image_item['image_list'])
-            image_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+            image_item['crawl_date'] = date.today()
 
             self.logger.info('user_id: {0:s}, post_id: {1:s}. All the images have been crawled.'.format(image_item['user_id'], image_item['post_id']))
             yield image_item
@@ -598,9 +597,10 @@ class WeiboSpider(CrawlSpider):
             if self.settings.get('MAX_COMMENT_COUNTS_PER_POST') and cnt >= int(self.settings.get('MAX_COMMENT_COUNTS_PER_POST')):
                 comment_item['size'] = cnt
                 comment_item['comment_list'] = json.dumps(comment_item['comment_list'])
-                comment_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+                comment_item['crawl_date'] = date.today()
 
-                self.logger.info('user_id: {0:s}, post_id: {1:s}. All the comments have been crawled.'.format(comment_item['user_id'], comment_item['post_id']))
+                self.logger.info(
+                    'user_id: {0:s}, post_id: {1:s}. All the comments have been crawled.'.format(comment_item['user_id'], comment_item['post_id']))
                 yield comment_item
                 return
 
@@ -609,20 +609,21 @@ class WeiboSpider(CrawlSpider):
             next_url = 'http://weibo.cn' \
                        + response.xpath('//div[@class = "pa" and @id = "pagelist"]/form/div/a[1]/@href').extract_first()
             request = scrapy.Request(
-                url = next_url,
-                meta = {'item': comment_item},
-                priority = 1,
-                callback = self.parse_comment,
-                errback = self.error_handler
+                url=next_url,
+                meta={'item': comment_item},
+                priority=1,
+                callback=self.parse_comment,
+                errback=self.error_handler
             )
             yield request
         # 否则，返回这条微博的所有评论。
         else:
             comment_item['size'] = len(comment_item['comment_list'])
             comment_item['comment_list'] = json.dumps(comment_item['comment_list'])
-            comment_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+            comment_item['crawl_date'] = date.today()
 
-            self.logger.info('user_id: {0:s}, post_id: {1:s}. All the comments have been crawled.'.format(comment_item['user_id'], comment_item['post_id']))
+            self.logger.info(
+                'user_id: {0:s}, post_id: {1:s}. All the comments have been crawled.'.format(comment_item['user_id'], comment_item['post_id']))
             yield comment_item
 
     # 递归地爬取某条微博的所有的转发，爬取结束后返回。
@@ -646,9 +647,10 @@ class WeiboSpider(CrawlSpider):
                 if self.settings.get('MAX_FORWARD_COUNTS_PER_POST') and cnt >= int(self.settings.get('MAX_FORWARD_COUNTS_PER_POST')):
                     forward_item['size'] = cnt
                     forward_item['forward_list'] = json.dumps(forward_item['forward_list'])
-                    forward_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+                    forward_item['crawl_date'] = date.today()
 
-                    self.logger.info('user_id: {0:s}, post_id: {1:s}. All the forwards have been crawled.'.format(forward_item['user_id'], forward_item['post_id']))
+                    self.logger.info('user_id: {0:s}, post_id: {1:s}. All the forwards have been crawled.'.format(forward_item['user_id'],
+                                                                                                                  forward_item['post_id']))
                     yield forward_item
                     return
 
@@ -657,20 +659,21 @@ class WeiboSpider(CrawlSpider):
             next_url = 'http://weibo.cn' \
                        + response.xpath('//div[@class = "pa" and @id = "pagelist"]/form/div/a[1]/@href').extract_first()
             request = scrapy.Request(
-                url = next_url,
-                meta = {'item': forward_item},
-                priority = 1,
-                callback = self.parse_forward,
-                errback = self.error_handler
+                url=next_url,
+                meta={'item': forward_item},
+                priority=1,
+                callback=self.parse_forward,
+                errback=self.error_handler
             )
             yield request
         # 否则，返回这条微博的所有的转发内容，然后生成第一页点赞的 Request 对象。之所以不在 parse_all_posts 里生成，是因为其中返回的 response 里没有正确的点赞 url（其中的 url 请求后相当于是点赞）。
         else:
             forward_item['size'] = len(forward_item['forward_list'])
             forward_item['forward_list'] = json.dumps(forward_item['forward_list'])
-            forward_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+            forward_item['crawl_date'] = date.today()
 
-            self.logger.info('user_id: {0:s}, post_id: {1:s}. All the forwards have been crawled.'.format(forward_item['user_id'], forward_item['post_id']))
+            self.logger.info(
+                'user_id: {0:s}, post_id: {1:s}. All the forwards have been crawled.'.format(forward_item['user_id'], forward_item['post_id']))
             yield forward_item
 
     # 爬取某条微博的所有点赞信息，爬取结束后返回。
@@ -694,9 +697,10 @@ class WeiboSpider(CrawlSpider):
                 if self.settings.get('MAX_THUMBUP_COUNTS_PER_POST') and cnt >= int(self.settings.get('MAX_THUMBUP_COUNTS_PER_POST')):
                     thumbup_item['size'] = cnt
                     thumbup_item['thumbup_list'] = json.dumps(thumbup_item['thumbup_list'])
-                    thumbup_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+                    thumbup_item['crawl_date'] = date.today()
 
-                    self.logger.info('user_id: {0:s}, post_id: {1:s}. All the thumbups have been crawled.'.format(thumbup_item['user_id'], thumbup_item['post_id']))
+                    self.logger.info('user_id: {0:s}, post_id: {1:s}. All the thumbups have been crawled.'.format(thumbup_item['user_id'],
+                                                                                                                  thumbup_item['post_id']))
                     yield thumbup_item
                     return
 
@@ -705,18 +709,19 @@ class WeiboSpider(CrawlSpider):
             next_url = 'http://weibo.cn' \
                        + response.xpath('//div[@class = "pa" and @id = "pagelist"]/form/div/a[1]/@href').extract_first()
             request = scrapy.Request(
-                url = next_url,
-                meta = {'item': thumbup_item},
-                priority = 1,
-                callback = self.parse_thumbup,
-                errback = self.error_handler
+                url=next_url,
+                meta={'item': thumbup_item},
+                priority=1,
+                callback=self.parse_thumbup,
+                errback=self.error_handler
             )
             yield request
         # 否则，返回该条微博的所有点赞信息。
         else:
             thumbup_item['size'] = len(thumbup_item['thumbup_list'])
             thumbup_item['thumbup_list'] = json.dumps(thumbup_item['thumbup_list'])
-            thumbup_item['crawl_time'] = datetime.now().replace(microsecond = 0)
+            thumbup_item['crawl_date'] = date.today()
 
-            self.logger.info('user_id: {0:s}, post_id: {1:s}. All the thumbups have been crawled.'.format(thumbup_item['user_id'], thumbup_item['post_id']))
+            self.logger.info(
+                'user_id: {0:s}, post_id: {1:s}. All the thumbups have been crawled.'.format(thumbup_item['user_id'], thumbup_item['post_id']))
             yield thumbup_item
