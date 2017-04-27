@@ -346,7 +346,10 @@ class WeiboSpider(CrawlSpider):
         )
         text_item['user_id'] = user_id
         text_item['post_id'] = post_id
-        text_item['text'] = response.xpath('//body/div[@class = "c" and @id = "M_"]/div[1]/span[@class = "ctt"]/text()').extract_first()
+        temp_text = '\n'.join(
+            response.xpath('//body/div[@class = "c" and @id = "M_"]/div[1]/span[@class = "ctt"]/text()').extract()
+        )
+        text_item['text'] = temp_text[1:].strip() if re.match(':|：', temp_text) else temp_text.strip()
         text_item['crawl_date'] = date.today()
 
         self.logger.info('user_id: {0:s} post_id: {1:s}. Its post info and text have been crawled.'.format(user_id, post_id))
@@ -450,7 +453,10 @@ class WeiboSpider(CrawlSpider):
             )
             text_item['user_id'] = user_id
             text_item['post_id'] = post_id
-            text_item['text'] = div_selector.xpath('div[1]/span[@class = "ctt"]/text()').extract_first()
+            temp_text = '\n'.join(
+                div_selector.xpath('div[1]/span[@class = "ctt"]/text()').extract()
+            )
+            text_item['text'] = temp_text[1:].strip() if re.match(':|：', temp_text) else temp_text.strip()
             text_item['crawl_date'] = date.today()
 
             # 返回当前用户的当前微博的信息与文本.
