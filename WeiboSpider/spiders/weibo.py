@@ -33,12 +33,12 @@ class WeiboSpider(CrawlSpider):
         # 发送 requests.
         for user_id in user_id_list:
             yield scrapy.Request(
-                url = 'http://weibo.cn/' + user_id,
+                url = 'https://weibo.cn/' + user_id,
                 meta = {'user_id': user_id}
             )
 
             yield scrapy.Request(
-                url = 'http://weibo.cn/' + user_id + '/info',
+                url = 'https://weibo.cn/' + user_id + '/info',
                 meta = {'user_id': user_id},
                 callback = self.parse_user_info,
                 errback = self.error_handler
@@ -65,7 +65,7 @@ class WeiboSpider(CrawlSpider):
 
             # 生成关注的 Request 对象，用以爬取当前用户关注的人。
             yield scrapy.Request(
-                url = 'http://weibo.cn/' + user_id + '/follow?page=1',
+                url = 'https://weibo.cn/' + user_id + '/follow?page=1',
                 meta = {'item': follow_item},
                 callback = self.parse_follow,
                 errback = self.error_handler
@@ -73,7 +73,7 @@ class WeiboSpider(CrawlSpider):
 
             # 生成粉丝的 Request 对象，用以爬取当前用户的粉丝。
             yield scrapy.Request(
-                url = 'http://weibo.cn/' + user_id + '/fans?page=1',
+                url = 'https://weibo.cn/' + user_id + '/fans?page=1',
                 meta = {'item': fan_item},
                 callback = self.parse_fan,
                 errback = self.error_handler
@@ -88,7 +88,7 @@ class WeiboSpider(CrawlSpider):
             for user_id, post_id in self.settings.get('SPEC_WEIBO_LIST'):
                 # 生成指定微博的基本信息的 Request 对象.
                 yield scrapy.Request(
-                    url = 'http://weibo.cn/comment/' + re.split('_', post_id)[1],
+                    url = 'https://weibo.cn/comment/' + re.split('_', post_id)[1],
                     meta = {'user_id': user_id, 'post_id': post_id},
                     callback = self.parse_single_post,
                     errback = self.error_handler
@@ -97,7 +97,7 @@ class WeiboSpider(CrawlSpider):
             for user_id in self.settings.get('CRAWLED_WEIBO_USER_ID_LIST'):
                 # 生成首条微博的基本信息的 Request 对象.
                 yield scrapy.Request(
-                    url = 'http://weibo.cn/' + user_id + '?filter=1&page=1',
+                    url = 'https://weibo.cn/' + user_id + '?filter=1&page=1',
                     meta = {'user_id': user_id, 'cnt': 0},
                     callback = self.parse_all_posts,
                     errback = self.error_handler
@@ -150,7 +150,7 @@ class WeiboSpider(CrawlSpider):
 
         # 如果后面还有，则生成下一页关注人的 Request 对象。
         if response.xpath('//div[@id = "pagelist"]//a[contains(text(), "下页")]'):
-            next_url = 'http://weibo.cn' + response.xpath('//div[@id = "pagelist"]/form/div/a[1]/@href').extract_first()
+            next_url = 'https://weibo.cn' + response.xpath('//div[@id = "pagelist"]/form/div/a[1]/@href').extract_first()
             request = scrapy.Request(
                 url = next_url,
                 meta = {'item': follow_item},
@@ -187,7 +187,7 @@ class WeiboSpider(CrawlSpider):
 
         # 如果后面还有，则生成下一页粉丝的 Request 对象。
         if response.xpath('//div[@id = "pagelist"]//a[contains(text(), "下页")]'):
-            next_url = 'http://weibo.cn' + response.xpath('//div[@id = "pagelist"]/form/div/a[1]/@href').extract_first()
+            next_url = 'https://weibo.cn' + response.xpath('//div[@id = "pagelist"]/form/div/a[1]/@href').extract_first()
             request = scrapy.Request(
                 url = next_url,
                 meta = {'item': fan_item},
@@ -293,7 +293,7 @@ class WeiboSpider(CrawlSpider):
         if not response.xpath('//div[@class = "c" and @id = "M_" and div[2]]'):
             self.logger.info('user_id: {0:s} post_id: {0:s}. No image exists.'.format(user_id, post_id))
             return
-        image_start_url = 'http://weibo.cn' + response.xpath('//div[@class = "c" and @id = "M_"]/div[2]/a[1]/@href').extract_first()
+        image_start_url = 'https://weibo.cn' + response.xpath('//div[@class = "c" and @id = "M_"]/div[2]/a[1]/@href').extract_first()
 
         flag = True
         for span_selector in response.xpath('(//body/div[not(@class) and not(@id)])/span'):
@@ -303,13 +303,13 @@ class WeiboSpider(CrawlSpider):
                 if (not temp_list) or (temp_list[0] == '0'):
                     flag = False
                 else:
-                    forward_start_url = 'http://weibo.cn' + span_selector.xpath('./a/@href').extract_first()
+                    forward_start_url = 'https://weibo.cn' + span_selector.xpath('./a/@href').extract_first()
             elif re.search('赞', temp_str):
                 temp_list = re.findall(r'\d+', temp_str)
                 if (not temp_list) or (temp_list[0] == '0'):
                     flag = False
                 else:
-                    thumbup_start_url = 'http://weibo.cn' + span_selector.xpath('./a/@href').extract_first()
+                    thumbup_start_url = 'https://weibo.cn' + span_selector.xpath('./a/@href').extract_first()
             elif re.search('评论', temp_str):
                 temp_list = re.findall(r'\d+', temp_str)
                 if (not temp_list) or (temp_list[0] == '0'):
@@ -406,7 +406,7 @@ class WeiboSpider(CrawlSpider):
                         if (not temp_list) or (temp_list[0] == '0'):
                             flag = False
                         else:
-                            thumbup_start_url = re.split(r'(http://weibo.cn/attitude/[^/]+)', a_selector.xpath('@href').extract_first())[1] + '?#attitude'
+                            thumbup_start_url = re.split(r'(https://weibo.cn/attitude/[^/]+)', a_selector.xpath('@href').extract_first())[1] + '?#attitude'
                     elif re.search('转发', temp_str):
                         #　如果转发个数为 0.
                         temp_list = re.findall(r'\d+', temp_str)
@@ -481,7 +481,7 @@ class WeiboSpider(CrawlSpider):
 
         # 如果当前用户还存在其他微博，则继续爬取它们的基本信息以及文本。由于每条微博是一个 Item，在爬取每一条微博的基本信息和文本后就会返回，因此当后面不存在微博时，不需要另作返回。
         if response.xpath('//div[@id = "pagelist" and @class = "pa"]//a[contains(text(), "下页")]/@href'):
-            next_url = 'http://weibo.cn' \
+            next_url = 'https://weibo.cn' \
                        + response.xpath('//div[@id = "pagelist" and @class = "pa"]//a[contains(text(), "下页")]/@href').extract_first()
             request = scrapy.Request(
                 url = next_url,
@@ -557,7 +557,7 @@ class WeiboSpider(CrawlSpider):
 
         # 如果后面还存在其他图片，则生成下一张图片的 Request 对象。
         if div_selector[0].xpath('div[@class = "tc"][2]/a[contains(text(), "下一张")]'):
-            next_url = 'http://weibo.cn' + div_selector[0].xpath('div[@class = "tc"][2]/a/@href').extract_first()
+            next_url = 'https://weibo.cn' + div_selector[0].xpath('div[@class = "tc"][2]/a/@href').extract_first()
             request = scrapy.Request(
                 url = next_url,
                 meta = {'item': image_item},
@@ -608,7 +608,7 @@ class WeiboSpider(CrawlSpider):
 
         # 如果后面还存在着其他评论，则生成下一页评论的 Request 对象。
         if response.xpath('//div[@class = "pa" and @id = "pagelist"]//a[contains(text(), "下页")]'):
-            next_url = 'http://weibo.cn' \
+            next_url = 'https://weibo.cn' \
                        + response.xpath('//div[@class = "pa" and @id = "pagelist"]/form/div/a[1]/@href').extract_first()
             request = scrapy.Request(
                 url = next_url,
@@ -656,7 +656,7 @@ class WeiboSpider(CrawlSpider):
 
         # 如果后面还存在着其他转发，则生成下一页转发的 Request 对象。
         if response.xpath('//div[@class = "pa" and @id = "pagelist"]//a[contains(text(), "下页")]'):
-            next_url = 'http://weibo.cn' \
+            next_url = 'https://weibo.cn' \
                        + response.xpath('//div[@class = "pa" and @id = "pagelist"]/form/div/a[1]/@href').extract_first()
             request = scrapy.Request(
                 url = next_url,
@@ -704,7 +704,7 @@ class WeiboSpider(CrawlSpider):
 
         # 如果后面还存在着其他点赞，则生成下一页点赞的 Request 对象。
         if response.xpath('//div[@class = "pa" and @id = "pagelist"]//a[contains(text(), "下页")]'):
-            next_url = 'http://weibo.cn' \
+            next_url = 'https://weibo.cn' \
                        + response.xpath('//div[@class = "pa" and @id = "pagelist"]/form/div/a[1]/@href').extract_first()
             request = scrapy.Request(
                 url = next_url,
