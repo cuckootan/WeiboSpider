@@ -236,6 +236,8 @@
         POSTGRESQL_USERNAME = 'your postgresql username'
         # Your postgresql password.
         POSTGRESQL_PASSWORD = 'your postgresql password'
+        # Your postgresql host.
+        POSTGRESQL_HOST = 'your postgresql host'
         # Your postgresql databaes.
         POSTGRESQL_DATABASE = 'your postgresql database name'
 
