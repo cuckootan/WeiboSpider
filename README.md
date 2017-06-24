@@ -22,6 +22,9 @@
 -   支持多 user-agent 轮流使用，目的在于减小被 ban 的几率；
 -   支持自定义 cookies。当模拟登录失败时，可以用此方法；
 -   支持两种方式爬取。一种是指定用户ID，然后爬取该用户的所有相关数据；另一种是指定微博ID，可以爬取该微博的所有文本，图像，评论，转发，点赞，以及发表该微博的用户的个人信息，粉丝，关注的人；
+
+    >   可以使用 inject\_spec\_weibo\_id.py 程序自动将一个文件中存放指定爬取的所有微博的用户ID 和微博ID 自动注入到 settings.py 中。
+    >   对于该文件，每行存放一条微博的用户 ID 和微博 ID，两者之间以一个或多个空格或 Tab 分开。
 -   用数据库存储，爬取结束后再从数据库导出，这样方便且高效；
 -   爬取结束时会自动发送邮件进行通知；
 
@@ -238,6 +241,10 @@
 
         # The IDs of users you want to crawl.
         CRAWLED_WEIBO_ID_LIST = ['123456789', '246812345', ...]
+
+        # Crawl specific weibo.
+        SPEC_WEIBO_ENABLED = True
+        SPEC_WEIBO_LIST = [('123456789', 'M_abcdEFG'), ('246812345', 'M_efghABCD')]
 
         # Email notification.
         MAIL_ENABLED = False
